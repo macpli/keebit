@@ -6,7 +6,7 @@ const Navbar = async () => {
   return (
     <div className='px-5 py-3 bg-white shadow-sm font-work-sans text-black'>
       {session && session?.user ? (
-        <>
+        <div className='flex gap-5'>
           <button>Add</button>
 
           <form action = { async () => {
@@ -19,7 +19,7 @@ const Navbar = async () => {
           </form>
 
           <span>{session.user.name}</span>
-        </>
+        </div>
       ): (
         <>
           <form action={ async () => {
