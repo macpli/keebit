@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
+import { pool } from "@/lib/db";
 
-const pool = new Pool({
-  host: process.env.DATABASE_HOST,
-  user: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
-  port: 5432,
-});
-
-// Fetch collections for a specific user
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { userId: string } }
-) {
-  const { userId } = params;
-
+export async function GET(req: NextRequest, { 
+  params,
+}: { 
+  params: Promise<{ userId: string }>
+}) {
+  const userId = (await params).userId;
+  
   try {
     const { rows: collections } = await pool.query(
-      "SELECT * FROM collections WHERE user_id = $1",
+      `SELECT * FROM collections WHERE "userId" = $1`,  
       [userId]
     );
 

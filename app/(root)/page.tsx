@@ -1,14 +1,8 @@
 import { auth } from "@/auth";
-import { User } from "../types/user";
+import { Collection } from "../../types/collection";
+import Link from 'next/link';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// async function fetchCollection(collectionId: string) {
-  
-//   const res = await fetch(baseUrl+`/api/collections/${collectionId}`);
-//   const data = await res.json();
-//   return data.collection;
-// }
 
 async function fetchCollections(userId: string) {
   const res = await fetch(baseUrl+'/api/collections/' + userId, {
@@ -24,8 +18,7 @@ async function fetchCollections(userId: string) {
   return data.collection;
 }
 
-
-export default async function UsersPage({ params }: { params: { collectionId: string } }) {
+export default async function UsersPage() {
   const session = await auth();
 
   if (!session || !session.user || !session.user.id) {
@@ -33,12 +26,17 @@ export default async function UsersPage({ params }: { params: { collectionId: st
   }  
 
   const collections = await fetchCollections(session.user.id);  
-  console.log(collections)
-
 
   return (
     <div>
-      Hello World!
+      {collections.map((collection: Collection) => (
+
+        <Link key={collection.id} href={`/collections/${collection.id}`} className="block p-4 hover:bg-gray-50">
+          <h2>{collection.name}</h2>
+        </Link>
+        
+      ))}
+
     </div>
   )
 }
