@@ -16,7 +16,27 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
+import { Ellipsis } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { deleteCollection } from "./_actions/deleteCollection";
 
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -108,8 +128,44 @@ export default async function UsersPage() {
 
       {collections.map((collection: Collection) => (
 
+        // Fix Link to a different element, probably make a client component with this list
         <Link key={collection.id} href={`/collections/${collection.id}`} className="block p-4 hover:bg-gray-50">
-          <h2>{collection.name}</h2>
+          <div className="flex justify-between">
+            <h2>{collection.name}</h2>
+            
+            <div className="mx-9">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost"><Ellipsis /></Button>
+            </DropdownMenuTrigger>
+            
+            <DropdownMenuContent>
+
+              <DropdownMenuItem disabled>
+                <form
+                  action={async () => {
+                    "use server";
+                  }}
+                >
+                  <button type='submit'>Edit</button>
+                </form>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>
+                <form action={async () => {
+                  "use server";
+                  await deleteCollection({ collectionId: collection.id })
+                  }}>
+                  <button type='submit'>Delete</button>
+                </form>
+              </DropdownMenuItem>
+
+            </DropdownMenuContent>
+
+          </DropdownMenu>
+            </div>
+            
+          </div>
         </Link>
         
       ))}
