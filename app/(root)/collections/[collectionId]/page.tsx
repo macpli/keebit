@@ -3,8 +3,10 @@ import { Collection } from "@/types/collection";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import addItem  from "../../_actions/addItem";
+import { revalidatePath } from "next/cache";
 
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, ChevronsUpDown, Check } from "lucide-react"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,12 +14,27 @@ import {
 } from "@/components/ui/resizable"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+import AddItemForm from '@/components/AddItemForm'
+
 
 export default function CollectionPage() {
   const [collectionItems, setCollectionItems] = useState<Collection>();
   const [itemsWithoutContainers, setItemsWithoutContainers] = useState([]);
   const [containers, setContainers] = useState([]);
-  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const params = useParams<{ collectionId: string; }>();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -32,26 +49,26 @@ export default function CollectionPage() {
       }
     };
 
-    async function getCollectionItems(collection: any) {
-      if(collection.itemsWithoutContainers === null) return;
-
-      const items = collection.itemsWithoutContainers.map((item: any) => {
-        return item;
-      });
-      setItemsWithoutContainers(items);
-    }
-
-    async function getContainers(collection: any) {
-      if(collection.containers === null) return;
-
-      const containers = collection.containers.map((container: any) => {
-        return container;
-      });
-      setContainers(containers); console.log(containers);
-    }
-
     fetchData();
   }, []);
+
+  async function getCollectionItems(collection: any) {
+    if(collection.itemsWithoutContainers === null) return;
+
+    const items = collection.itemsWithoutContainers.map((item: any) => {
+      return item;
+    });
+    setItemsWithoutContainers(items);
+  }
+
+  async function getContainers(collection: any) {
+    if(collection.containers === null) return;
+
+    const containers = collection.containers.map((container: any) => {
+      return container;
+    });
+    setContainers(containers); console.log(containers);
+  }
 
   async function fetchCollectionContent(collectionId: string) {
     try {
@@ -66,28 +83,54 @@ export default function CollectionPage() {
       return null; 
     }
   } 
-  
 
+  const handleFormSuccess = () => {
+    setIsDialogOpen(false);
+  };
+  
   if (!params.collectionId) {
     return <div>Collection not found</div>;
   }
 
   return (
-
-
     <div className="p-6">
       
-      <Button asChild variant="outline" size="icon" className="mb-4">
-
-        <Link href="/">
-          <ChevronLeft />
-        </Link>
-      </Button>
-
-  
       <h1 className="text-2xl font-bold mb-2 ">{collectionItems?.name}</h1>
-      <p className="text-gray-600">Created by: Maciej</p>
+      <p className="text-gray-600">{collectionItems?.description}</p>
 
+      <Separator className="mt-2 mb-6"/>
+
+      <div className="flex gap-4">
+
+        <Button asChild variant="outline" size="icon" className="mb-4">
+          <Link href="/">
+            <ChevronLeft />
+          </Link>
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className=''>
+            <DialogTrigger asChild >
+              <Button variant="outline" onClick={() => setIsDialogOpen(true)}>New</Button>
+            </DialogTrigger>
+          </div>
+
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add new</DialogTitle>
+              <DialogDescription>
+                Create your container here or add an item. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+
+            <AddItemForm collectionId={params.collectionId} onSuccess={handleFormSuccess}/>
+
+          </DialogContent>
+        </Dialog>
+
+      </div>
+      
+      
       <Separator className="mt-2 mb-6"/>
 
       <ResizablePanelGroup direction="horizontal" className="min-h-[200px] max-w rounded-lg border md:min-w-[450px]">
@@ -105,7 +148,9 @@ export default function CollectionPage() {
           </div>
 
         </ResizablePanel>
+
         <ResizableHandle withHandle />
+
         <ResizablePanel defaultSize={35}>
           <div className="flex flex-col h-full p-6">
             <h2 className="text-xl font-semibold mb-4">Containers</h2>
@@ -127,14 +172,6 @@ export default function CollectionPage() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      <div className="mt-8">
-        <div className="flex gap-4 ">
-          
-          
-          
-
-        </div>
-      </div>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { Collection } from "../../types/collection";
 import Link from 'next/link';
 import { revalidatePath } from "next/cache";
 import { addCollection } from "./_actions/addCollection";
+import { deleteCollection } from "./_actions/deleteCollection";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,18 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { deleteCollection } from "./_actions/deleteCollection";
 
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -119,12 +109,12 @@ export default async function UsersPage() {
               <Input id="description" name="description" className="col-span-3" / >
             </div>
           </div>
-        <DialogFooter>
-          <Button type="submit">Save changes</Button>
-        </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button type="submit">Save changes</Button>
+          </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {collections.map((collection: Collection) => (
 

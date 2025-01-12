@@ -23,6 +23,7 @@ export async function GET(req: NextRequest, {
       SELECT json_build_object(
     'collectionId', c."id",
     'name', c."name",
+    'description', c."description",
     'containers', (
         SELECT json_agg(
             json_build_object(
