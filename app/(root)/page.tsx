@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { redirect } from "next/navigation";
 
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -46,6 +47,7 @@ async function fetchCollections(userId: string) {
 }
 
 let dialogKey = Date.now();
+
 async function handleSubmit(formData: FormData) {
   'use server';
 
@@ -71,6 +73,10 @@ async function handleSubmit(formData: FormData) {
 
 export default async function UsersPage() {
   const session = await auth();
+  if(!session) {
+    redirect("/login");
+  }
+    
 
   if (!session || !session.user || !session.user.id) {
         return <div>Please log in to view your collections.</div>;
