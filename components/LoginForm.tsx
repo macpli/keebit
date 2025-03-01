@@ -9,12 +9,19 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn } from "@/auth"
+import { auth, signIn } from "@/auth"
+import Link  from "next/link"
+import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error"
+import { executeAction } from "@/lib/executeAction"
 
-export function LoginForm({
+export async function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const session = await auth();
+  if(session) redirect("/");
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -25,14 +32,22 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form action={async (formData: FormData) => {
+            "use server";
+            await executeAction({
+              actionFn: async () => {
+                await signIn("credentials", formData);
+              }
+            })
+          }}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="kowalski@example.com"
                   required
                 />
               </div>
@@ -46,7 +61,7 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input id="password" name="password" type="password" required />
               </div>
               <Button type="submit" className="w-full">
                 Login
@@ -66,9 +81,9 @@ export function LoginForm({
 
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
+              <Link href="/register" className="underline underline-offset-4">
                 Sign up
-              </a>
+              </Link>
             </div>
         </CardContent>
       </Card>
