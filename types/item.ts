@@ -1,12 +1,8 @@
 export type Item = {
-    id: string;
-    collectionId: string;
-    containerId?: string;
-    typeId?: string;
-    name: string;
-    description?: string;
+    itemId: string;
+    itemName: string;
+    description: string;
     quantity: number;
-    attributes?: Record<string, any>; // Elastyczne dane JSON
-    createdAt: string;
-    updatedAt: string;
+    attributes: any;
+    itemType: string;
   };
