@@ -52,18 +52,20 @@ export async function GET(req: NextRequest, {
         )
     ),
     'itemsWithoutContainers', (
-        SELECT json_agg(
-            json_build_object(
-                'itemId', i."id",
-                'itemName', i."name",
-                'description', i."description",
-                'quantity', i."quantity",
-                'attributes', i."attributes"
-            )
+    SELECT json_agg(
+        json_build_object(
+            'itemId', i."id",
+            'itemName', i."name",
+            'description', i."description",
+            'quantity', i."quantity",
+            'attributes', i."attributes",
+            'itemType', it."name" 
         )
-        FROM "items" i
-        WHERE i."containerId" IS NULL AND i."collectionId" = c."id"
     )
+    FROM "items" i
+    JOIN "item_types" it ON i."typeId" = it."id"
+    WHERE i."containerId" IS NULL AND i."collectionId" = c."id"
+)
 ) AS "collectionData"
 FROM "collections" c
 WHERE c."id" = $1;`,
