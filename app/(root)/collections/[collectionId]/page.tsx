@@ -3,33 +3,15 @@ import { Collection } from "@/types/collection";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import addItem  from "../../_actions/addItem";
-import { revalidatePath } from "next/cache";
 
-import { ChevronLeft, ChevronsUpDown, Check } from "lucide-react"
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Item } from "@/types/item";
+
+import { Button, Separator, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, ScrollArea, ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/index";
 
 import AddItemForm from '@/components/AddItemForm'
 import ItemView from "@/components/ItemView/ItemView";
-import { Item } from "@/types/item";
-import { set } from "react-hook-form";
+
+import { ChevronLeft, CuboidIcon as Cube,  PackageOpen as ContainerIcon, Component } from "lucide-react"
 
 
 export default function CollectionPage() {
@@ -147,28 +129,36 @@ export default function CollectionPage() {
 
       </div>
       
-      <Separator className="mt-2 mb-6"/>
 
       <ItemView item={itemToDisplay}/>
 
       <ResizablePanelGroup direction="horizontal" className="min-h-[200px] max-w rounded-lg border md:min-w-[450px] mt-4">
-        <ResizablePanel defaultSize={65}>
+        <ResizablePanel defaultSize={50}>
 
-          <div className="flex flex-col h-full p-6 space-y-2">
-            <h2 className="text-xl font-semibold mb-4">Items</h2>
+          <div className="flex flex-col h-full">
+
+            <div className="flex gap-2 items-center p-4 mb-4 border-b">
+              <Component className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Items</h2>
+            </div>
 
             {/* ITEMS LIST  */}
-            {itemsWithoutContainers.map((item: Item) => (
-              <div key={item.itemId}
-                    onClick={() => toggleItemView(item)}  
-                    className={`
-                    p-2 rounded-md cursor-pointer transition-colors ${itemToDisplay?.itemId === item.itemId ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}
-                    `}>
-                <h3 className="font-medium ">{item.itemName}</h3>
-                <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{item.description}</p>
-                <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>Quantity: {item.quantity}</p>
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-2">
+                {itemsWithoutContainers.map((item: Item) => (
+                  <div key={item.itemId}
+                        onClick={() => toggleItemView(item)}  
+                        className={`
+                        p-3 rounded-md cursor-pointer transition-colors ${itemToDisplay?.itemId === item.itemId ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}
+                        `}>
+                    <h3 className="font-medium ">{item.itemName}</h3>
+                    <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{item.description}</p>
+                    <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>Quantity: {item.quantity}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
+            
 
           </div>
 
@@ -176,25 +166,35 @@ export default function CollectionPage() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={35}>
-          <div className="flex flex-col h-full p-6">
-            <h2 className="text-xl font-semibold mb-4">Containers</h2>
+        <ResizablePanel defaultSize={50}>
+          <div className="flex flex-col h-full">
+            
+            <div className="flex p-4 mb-4 border-b items-center gap-2"> 
+            <ContainerIcon className="h-5 w-5" / >
+              <h2 className="text-xl font-semibold">Containers</h2>
+            </div>
 
             {/* CONTAINERS LIST  */}
-            {containers.map((container: any) => (
-              <div key={container.containerId} className="bg-white p-4 rounded-md">
-                <h3 className="font-semibold text-gray-800">{container.name}</h3>
-                <div className="flex flex-col gap-2">
-                  {container.items.map((item: any) => (
-                    <div key={item.itemId} className="bg-white p-4 rounded-md">
-                      <h3 className="text-medium text-gray-800">{item.itemName}</h3>
-                      <p className="text-sm text-gray-600">{item.description}</p>
-                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                    </div>
-                  ))}
+            <ScrollArea className="flex-1">
+            <div className="p-4 space-y-2">
+
+              {containers.map((container: any) => (
+                <div key={container.containerId} className="bg-white p-4 rounded-md">
+                  <h3 className="font-medium">{container.name}</h3>
+                  <div className="flex flex-col gap-2">
+                    {container.items.map((item: any) => (
+                      <div key={item.itemId} className="bg-white p-4 rounded-md">
+                        <h3 className="text-medium text-gray-800">{item.itemName}</h3>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            </ScrollArea>
+
 
           </div>
         </ResizablePanel>
