@@ -3,15 +3,23 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Html } from "@react-three/drei";
-import { GLTFExporter } from "three-stdlib";
 
 import { Suspense, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
+
+import { ColorDTO } from "@/types/ColorDTO";
+import { getColors } from "@/app/(root)/_actions/getColors";
+import addColor from "@/app/(root)/_actions/addColor";
+import updateColor from "@/app/(root)/_actions/updateColor";
+import { getColorsDefault } from "@/app/(root)/_actions/getColorsDefault";
+
+import { Color } from "@/types/color";
+import { Item } from "@/types/item";
+
 import Spinner from "../Spinner";
-
-import { ChevronLeft } from "lucide-react"
-
+import { ChevronLeft } from "lucide-react";
 import { Button, Label, Slider } from "@/components/ui/index";
+
 
 const Model = () => {
   const { scene } = useGLTF("/switch.glb"); 
@@ -26,113 +34,151 @@ const Model = () => {
   return <primitive object={scene}  />;
 };
 
-interface Color {
-    uuid: string;
-    r: number;
-    g: number;
-    b: number;
-}
 
-const ModelViewer = () => {
-    const [zoom, setZoom] = useState(0);
-    const [colors, setColors] = useState<Color[]>([]); 
-    const [colorToEdit, setColorToEdit] = useState<Color>();
 
-    // Slider values
-    const [rgb, setRgb] = useState<{ r: number; g: number; b: number }>({
-        r: colorToEdit?.r || 105, 
-        g: colorToEdit?.g || 225,
-        b: colorToEdit?.b || 225,
-      })
+const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
+  const [zoom, setZoom] = useState(0);
+  const [colors, setColors] = useState<Color[]>([]); 
+  const [colorToEdit, setColorToEdit] = useState<Color>();
 
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const { nodes, materials } = useGLTF("/switch.glb");
-
-    const getMaterialColors = () => {
-        let modelColors: Color[] = [];
-
-        if(materials){
-            Object.keys(materials).forEach((key) => {
-                const color = materials[key].color;
-                const rgbColor = convertColorTo255({ r: color.r, g: color.g, b: color.b });
-
-                const newColor = {
-                    uuid: materials[key].uuid,
-                    r: rgbColor.r,
-                    g: rgbColor.g,
-                    b: rgbColor.b,
-                }
-
-                modelColors.push(newColor);
-            });
+  // Slider values
+  const [rgb, setRgb] = useState<{ r: number; g: number; b: number }>({
+      r: colorToEdit?.r || 105, 
+      g: colorToEdit?.g || 225,
+      b: colorToEdit?.b || 225,
+  })
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { nodes, materials } = useGLTF("/switch.glb");
+  
+  const getMaterialColors = () => {
+    let modelColors: Color[] = [];
+    if(materials){
+      Object.keys(materials).forEach((key, idx) => {
+        const color = (materials[key] as THREE.MeshStandardMaterial).color;
+        const rgbColor = convertColorTo255({ r: color.r, g: color.g, b: color.b });
+        const newColor = {
+            uuid: materials[key].uuid,
+            r: rgbColor.r,
+            g: rgbColor.g,
+            b: rgbColor.b,
+            material_index: idx,
         }
+        
+        modelColors.push(newColor);
+      });
+    }
 
-        setColors([...(colors || []), ...modelColors]);
-        return colors;
+    setColors([...(colors || []), ...modelColors]);
+    return colors;
+  };
+
+  const convertColorTo255 = (color: { r: number; g: number; b: number }) => {
+    return {
+      r: Math.round(color.r * 255),
+      g: Math.round(color.g * 255),
+      b: Math.round(color.b * 255),
     };
+  };
 
-    const convertColorTo255 = (color: { r: number; g: number; b: number }) => {
-        return {
-          r: Math.round(color.r * 255),
-          g: Math.round(color.g * 255),
-          b: Math.round(color.b * 255),
-        };
+  const updateColorFromSlider = (component: "r" | "g" | "b", value: number) => {
+    const newRgb = { ...rgb, [component]: value }
+    setRgb(newRgb)
+    if (colorToEdit) {
+        setColorToEdit({ ...colorToEdit, ...newRgb });
+    }
+  }
+
+  const setModelColor = async () => {
+    if (colorToEdit) {
+      const newColor = new THREE.Color(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
+      
+      // Find the material with the matching UUID
+      Object.keys(materials).forEach((key, idx) => {
+          if (idx === colorToEdit.material_index) {
+              (materials[key] as THREE.MeshStandardMaterial).color.set(newColor);
+              colors[idx] = colorToEdit;
+          }
+      });
+
+      // TODO: SAVE THE COLORS AS JSON TO THE DATABASE
+      // TO THEN LOAD AND APPLY THEM WITH THE MODEL INIT
+      const colorData: ColorDTO = {
+        item_id: item.itemId,
+        model_name: "switch",
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        material_index: colorToEdit.material_index,
       };
 
-    const updateColor = (component: "r" | "g" | "b", value: number) => {
-        const newRgb = { ...rgb, [component]: value }
-        setRgb(newRgb)
-        if (colorToEdit) {
-            setColorToEdit({ ...colorToEdit, ...newRgb });
-        }
+      handleAddColor(colorData);
+    }
+  }
+
+  const handleAddColor = async (colorData: ColorDTO) => {
+    const colorsInDb = await getColors(item.itemId);
+    
+    if(colorsInDb.length > 0){
+      // Update the color
+      updateColor(colorData);
+    } else {
+      // Add the color
+      addColor(colorData);
+    }
+  }
+
+  const applyDefaultColors = async () => {
+    let defaultColors: Color[] = await getColorsDefault("switch");
+
+    Object.keys(materials).forEach(async (key, idx) => {
+      if(defaultColors!.length > 0){
+        setColors(defaultColors);
+        const newColor = defaultColors ? new THREE.Color(`rgb(${defaultColors[idx].r}, ${defaultColors[idx].g}, ${defaultColors[idx].b})`) : new THREE.Color();
+        (materials[key] as THREE.MeshStandardMaterial).color.set(newColor);
       }
-
-    const setModelColor = () => {
-        if (colorToEdit) {
-            const newColor = new THREE.Color(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
-            
-            // Find the material with the matching UUID
-            Object.keys(materials).forEach((key) => {
-                if (materials[key].uuid === colorToEdit.uuid) {
-                    materials[key].color.set(newColor);
-                }
-            });
-
-            // TODO: SAVE THE COLORS AS JSON TO THE DATABASE
-            // TO THEN LOAD AND APPLY THEM WITH THE MODEL INIT
+    });
+  }
+  
+  const configureModelSettings = async () => {    
+    // Fetch and set the colors
+    // If no colors are found, set the default colors
+    let colors = await getColors(item.itemId);
+    if(colors.length === 0){
+      applyDefaultColors();
+    } else {
+      setColors(colors);
+      Object.keys(materials).forEach(async (key, idx) => {
+        if(colors.length > 0){
+          const newColor = new THREE.Color(`rgb(${colors[idx].r}, ${colors[idx].g}, ${colors[idx].b})`);
+          (materials[key] as THREE.MeshStandardMaterial).color.set(newColor);
         }
+      });
     }
+    
+    
 
-    const saveModel = () => {
-        const exporter = new GLTFExporter();
-        exporter.parse(nodes, (gltf) => {
-            const blob = new Blob([JSON.stringify(gltf)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "model.glb";
-            a.click();
-        });
-    }
+    // Configure zoom
+    // COnfigure lighting
+  }
 
-    useEffect(() => {
-        if(materials){
-            getMaterialColors();
-        }
-    }, [materials]);
+  useEffect(() => {
+      if(materials){
+          getMaterialColors();
+      }
+  }, [materials]);
 
-    // TODO: ConfigureModelSettings
-    useEffect(() => {
-        if(true){
-            setZoom(80);
-        }
+  // TODO: ConfigureModelSettings
+  useEffect(() => {
+    setColorToEdit(undefined);
+    configureModelSettings();
 
-    }, []);
+      if(true){
+          setZoom(80);
+      }
+  }, [item]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full flex">
-
         {/* 3D Model */}
         <div className="flex-1">
             <Canvas camera={{position:[-1,1.2,-1], zoom: zoom}}>
@@ -153,8 +199,8 @@ const ModelViewer = () => {
           
           {/* Model Colors */}
           <div>
-            { !colorToEdit && colors.map((color: Color) => (
-                <div key={color.uuid} onClick={() => { setColorToEdit(color); setRgb({ r: color.r, g: color.g, b: color.b }); }} className="cursor-pointer p-2 rounded-md hover:bg-muted">
+            { !colorToEdit && colors.map((color: Color, idx) => (
+                <div key={idx} onClick={() => { setColorToEdit(color); setRgb({ r: color.r, g: color.g, b: color.b }); }} className="cursor-pointer p-2 rounded-md hover:bg-muted">
                     <div
                         className="w-full h-8 rounded-md border"
                         style={{ backgroundColor: `rgb(${color.r}, ${color.g}, ${color.b})` }}
@@ -178,7 +224,7 @@ const ModelViewer = () => {
                     max={255}
                     step={1}
                     value={[rgb.r]}
-                    onValueChange={(value) => updateColor("r", value[0])}
+                    onValueChange={(value) => updateColorFromSlider("r", value[0])}
                     className="cursor-pointer"
                   />
                 </div>
@@ -193,7 +239,7 @@ const ModelViewer = () => {
                     max={255}
                     step={1}
                     value={[rgb.g]}
-                    onValueChange={(value) => updateColor("g", value[0])}
+                    onValueChange={(value) => updateColorFromSlider("g", value[0])}
                     className="cursor-pointer"
                   />
                 </div>
@@ -208,7 +254,7 @@ const ModelViewer = () => {
                     max={255}
                     step={1}
                     value={[rgb.b]}
-                    onValueChange={(value) => updateColor("b", value[0])}
+                    onValueChange={(value) => updateColorFromSlider("b", value[0])}
                     className="cursor-pointer"
                   />
                 </div>

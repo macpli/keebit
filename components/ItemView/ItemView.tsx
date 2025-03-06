@@ -60,7 +60,7 @@ const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
 
                       </div>
                         {showModel ? (
-                            <ModelViewer />
+                            <ModelViewer item={item}/>
                         ) : (
                             <div className='flex items-center justify-center h-full'>
 
