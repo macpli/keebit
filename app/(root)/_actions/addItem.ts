@@ -19,7 +19,7 @@ export default async function addItem(item: Item, collectionId: string) {
             `INSERT INTO items ("collectionId", "typeId", name, description, quantity) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
             [collectionId, itemTypeId, item.name, item.description, item.quantity]
         );        
-        revalidatePath(`/collections/${collectionId}`);
+        
         return rows[0]; // Zwracamy nowo dodany obiekt
     } catch (error) {
         console.error("Error adding item:", error);
