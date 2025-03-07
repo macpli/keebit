@@ -12,6 +12,7 @@ import AddItemForm from '@/components/AddItemForm'
 import ItemView from "@/components/ItemView/ItemView";
 
 import { ChevronLeft, CuboidIcon as Cube,  PackageOpen as ContainerIcon, Component } from "lucide-react"
+import { revalidatePath } from "next/cache";
 
 
 export default function CollectionPage() {
@@ -26,18 +27,18 @@ export default function CollectionPage() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
-    const fetchData = async () => {
-      const collectionData = await fetchCollectionContent(params.collectionId);
-      if (collectionData) {
-        getCollectionItems(collectionData);
-        getContainers(collectionData);
-      } else {
-        console.error("Failed to fetch collection content");
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    const collectionData = await fetchCollectionContent(params.collectionId);
+    if (collectionData) {
+      getCollectionItems(collectionData);
+      getContainers(collectionData);
+    } else {
+      console.error("Failed to fetch collection content");
+    }
+  };
 
   async function getCollectionItems(collection: any) {
     if(collection.itemsWithoutContainers === null) return;
@@ -72,9 +73,11 @@ export default function CollectionPage() {
     }
   } 
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async () => {
+    console.log('in handleFormSuccess');
     setIsDialogOpen(false);
-  };
+    await fetchData();
+    };
 
   const toggleItemView = (e: Item) => {
     if(e === itemToDisplay) {
@@ -143,7 +146,7 @@ export default function CollectionPage() {
             </div>
 
             {/* ITEMS LIST  */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-75">
               <div className="p-4 space-y-2">
                 {itemsWithoutContainers.map((item: Item) => (
                   <div key={item.itemId}
@@ -183,10 +186,12 @@ export default function CollectionPage() {
                   <h3 className="font-medium">{container.name}</h3>
                   <div className="flex flex-col gap-2">
                     {container.items.map((item: any) => (
-                      <div key={item.itemId} className="bg-white p-4 rounded-md">
-                        <h3 className="text-medium text-gray-800">{item.itemName}</h3>
-                        <p className="text-sm text-gray-600">{item.description}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      <div key={item.itemId} onClick={() => toggleItemView(item)} className={`
+                        p-3 rounded-md cursor-pointer transition-colors ${itemToDisplay?.itemId === item.itemId ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}
+                        `}>
+                        <h3 className="text-medium">{item.itemName}</h3>
+                        <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{item.description}</p>
+                        <p className={`text-sm ${itemToDisplay?.itemId === item.itemId ? "text-primary-foreground/80" : "text-muted-foreground"}`}>Quantity: {item.quantity}</p>
                       </div>
                     ))}
                   </div>
