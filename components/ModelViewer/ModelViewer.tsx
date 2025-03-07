@@ -12,6 +12,7 @@ import { getColors } from "@/app/(root)/_actions/getColors";
 import addColor from "@/app/(root)/_actions/addColor";
 import updateColor from "@/app/(root)/_actions/updateColor";
 import { getColorsDefault } from "@/app/(root)/_actions/getColorsDefault";
+import modelLoader from "@/lib/modelLoader";
 
 import { Color } from "@/types/color";
 import { Item } from "@/types/item";
@@ -19,11 +20,14 @@ import { Item } from "@/types/item";
 import Spinner from "../Spinner";
 import { ChevronLeft } from "lucide-react";
 import { Button, Label, Slider } from "@/components/ui/index";
+import CameraConfiguration from "@/lib/cameraConfig";
+import { CameraConfig } from "@/types/cameraConfig";
+import { set } from "react-hook-form";
 
 
-const Model = () => {
-  const { scene } = useGLTF("/switch.glb"); 
-  
+const Model: React.FC<{ itemType: string }> = ({itemType}) => {
+  const { scene } = modelLoader(itemType);
+
   // Center the model
   useEffect(() => {
     const box = new THREE.Box3().setFromObject(scene);
@@ -34,12 +38,26 @@ const Model = () => {
   return <primitive object={scene}  />;
 };
 
+const CameraUpdater: React.FC<{ config: CameraConfig }> = ({ config }) => {
+  const { camera } = useThree();
 
+  useEffect(() => {
+    if (config) {
+      camera.position.set(config.position[0], config.position[1], config.position[2]);
+      camera.zoom = config.zoom;
+      camera.updateProjectionMatrix(); // Important for zoom updates
+    }
+  }, [config, camera]);
+
+  return null; // This component doesn't render anything
+};
 
 const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
-  const [zoom, setZoom] = useState(0);
   const [colors, setColors] = useState<Color[]>([]); 
   const [colorToEdit, setColorToEdit] = useState<Color>();
+  const [config, setConfig] = useState<CameraConfig>();  
+  
+ 
 
   // Slider values
   const [rgb, setRgb] = useState<{ r: number; g: number; b: number }>({
@@ -48,8 +66,9 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
       b: colorToEdit?.b || 225,
   })
   const containerRef = useRef<HTMLDivElement>(null);
-  const { nodes, materials } = useGLTF("/switch.glb");
+  const { nodes, materials } = modelLoader(item.itemType);
   
+  // Gets the default colors of the model
   const getMaterialColors = () => {
     let modelColors: Color[] = [];
     if(materials){
@@ -88,6 +107,7 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     }
   }
 
+  // Sets the color on the model and triggers the handleAddColor to add / update to database
   const setModelColor = async () => {
     if (colorToEdit) {
       const newColor = new THREE.Color(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
@@ -100,11 +120,9 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
           }
       });
 
-      // TODO: SAVE THE COLORS AS JSON TO THE DATABASE
-      // TO THEN LOAD AND APPLY THEM WITH THE MODEL INIT
       const colorData: ColorDTO = {
         item_id: item.itemId,
-        model_name: "switch",
+        model_name: item.itemType,
         r: rgb.r,
         g: rgb.g,
         b: rgb.b,
@@ -116,9 +134,13 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
   }
 
   const handleAddColor = async (colorData: ColorDTO) => {
-    const colorsInDb = await getColors(item.itemId);
-    
-    if(colorsInDb.length > 0){
+    const colorsInDb: ColorDTO[] = await getColors(item.itemId);
+
+    const colorExists = colorsInDb.find((c) => {
+      return c.item_id === colorData.item_id && c.material_index === colorData.material_index;
+    })
+
+    if(colorExists !== undefined){
       // Update the color
       updateColor(colorData);
     } else {
@@ -127,8 +149,9 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     }
   }
 
+  // Applies the default colors to the model if no colors are found in the database
   const applyDefaultColors = async () => {
-    let defaultColors: Color[] = await getColorsDefault("switch");
+    let defaultColors: Color[] = await getColorsDefault(item.itemType);
 
     Object.keys(materials).forEach(async (key, idx) => {
       if(defaultColors!.length > 0){
@@ -156,41 +179,42 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     }
     
     
-
     // Configure zoom
+    const newConfig = CameraConfiguration(item.itemType);
+    setConfig(newConfig);
+    
     // COnfigure lighting
   }
-
+  
   useEffect(() => {
-      if(materials){
-          getMaterialColors();
-      }
+    if(materials){
+      getMaterialColors();
+    }
   }, [materials]);
-
+  
   // TODO: ConfigureModelSettings
   useEffect(() => {
+    setConfig(CameraConfiguration(item.itemType));
     setColorToEdit(undefined);
     configureModelSettings();
 
-      if(true){
-          setZoom(80);
-      }
   }, [item]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full flex">
         {/* 3D Model */}
         <div className="flex-1">
-            <Canvas camera={{position:[-1,1.2,-1], zoom: zoom}}>
-                <ambientLight intensity={1.5} />
-                <directionalLight position={[-2, 1, -2]} intensity= {3} />
-                
-                <Suspense fallback={<Html center><Spinner width={60} height={60}/></Html>}>
-                  <Model />
-                </Suspense>
-        
-                <OrbitControls panSpeed={0.01}/>
-            </Canvas>
+          <Canvas  >
+            <CameraUpdater config={config} />
+            <ambientLight intensity={1.5} />
+            <directionalLight position={[-2, 1, -2]} intensity= {3} />
+            
+            <Suspense fallback={<Html center><Spinner width={60} height={60}/></Html>}>
+              <Model itemType={item.itemType} />
+            </Suspense>
+    
+            <OrbitControls panSpeed={0.01}/>
+          </Canvas>
         </div>
      
         {/* Color Editor */}
