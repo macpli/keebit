@@ -4,4 +4,5 @@ export {  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, D
 export { ScrollArea } from './scroll-area';
 export { Label } from './label';
 export { Slider } from './slider';
+export { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 export {  ResizableHandle, ResizablePanel, ResizablePanelGroup } from './resizable';
