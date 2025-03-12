@@ -11,7 +11,7 @@ export const pool =
     user: process.env.DATABASE_USER,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
-    port: 5432,
+    port: process.env.DATABASE_PORT,
   })
 
 // W trybie development zapisujemy pool w zmiennej globalnej
