@@ -1,4 +1,3 @@
-
 import { auth, signOut, signIn } from '@/auth';
 import Link from 'next/link';
 import React from 'react';
@@ -27,35 +26,13 @@ import { Button } from './ui/button';
 
 import { revalidatePath } from "next/cache";
 import { addCollection } from "../app/(root)/_actions/addCollection";
+import { signOutAction } from '@/app/(root)/_actions/signOut';
 
 const Navbar = async () => {
   const session = await auth();
-  // const router = useRouter();
-  // const [dialogKey, setDialogKey] = useState(Date.now());
 
-  async function handleSubmit(formData: FormData) {
-    'use server';
-  
-    const session = await auth();
-  
-    if (!session || !session.user || !session.user.id) {
-      console.error("Failed to create collection");
-      return;
-    }
-  
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-  
-    if (!name || !description) {
-      throw new Error("Name and description are required");
-    }
-  
-    await addCollection({ name, description, userId: session.user.id });
-  
-    revalidatePath('/collections');
-    // setDialogKey(Date.now());
-  }
-  
+  let dialogKey = Date.now();  
+
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
       
@@ -66,7 +43,7 @@ const Navbar = async () => {
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
           <Dialog 
-          // key={dialogKey} 
+          key={dialogKey} 
           >
             <div className=''>
               <DialogTrigger asChild >
@@ -84,7 +61,12 @@ const Navbar = async () => {
                   Create your collection here. Click save when you're done.
                 </DialogDescription>
               </DialogHeader>
-              <form action={handleSubmit}>
+              <form action={async (formData: FormData)=>{
+                "use server";
+                await addCollection(formData);
+                // dialogKey = Date.now();
+                revalidatePath('/collections');
+              }}>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
@@ -121,9 +103,9 @@ const Navbar = async () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <form
-                  action={async () => {
+                  action={async ()=> {
                     "use server";
-                    await signOut({ redirectTo: "/" }); // Usuwa sesję użytkownika
+                    signOutAction();
                   }}
                 >
                   <button type='submit'>Logout</button>

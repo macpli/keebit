@@ -1,8 +1,8 @@
-'use server';
+  "use server";
 import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 
-export async function addCollection({ formData }: { formData: FormData }) {
+export async function addCollection(formData: FormData) {
   const session = await auth()
   if (!session || !session.user || !session.user.id) {
     console.error("Failed to create collection");
@@ -22,7 +22,7 @@ export async function addCollection({ formData }: { formData: FormData }) {
       [session.user.id, name, description]
     );
 
-    return rows[0]; // Zwracamy nowo dodany obiekt
+    return rows[0]; 
   } catch (error) {
     console.error("Error adding collection:", error);
     throw error;
