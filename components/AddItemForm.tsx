@@ -167,7 +167,6 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
           )}
         />)}
         
-        
         <Button type="submit">Submit</Button>
       </form>
     </Form>
