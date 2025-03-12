@@ -25,7 +25,7 @@ import { CameraConfig } from "@/types/cameraConfig";
 import { set } from "react-hook-form";
 
 
-const Model: React.FC<{ itemType: string }> = ({itemType}) => {
+const Model = ({itemType}: {itemType: string}) => {
   const { scene } = modelLoader(itemType);
 
   // Center the model
@@ -38,7 +38,7 @@ const Model: React.FC<{ itemType: string }> = ({itemType}) => {
   return <primitive object={scene}  />;
 };
 
-const CameraUpdater: React.FC<{ config: CameraConfig }> = ({ config }) => {
+const CameraUpdater = ({ config } : { config : CameraConfig }) => {
   const { camera } = useThree();
 
   useEffect(() => {
@@ -198,6 +198,7 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     setColorToEdit(undefined);
     configureModelSettings();
 
+    console.log(item.itemType);
   }, [item]);
 
   return (
@@ -205,7 +206,7 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
         {/* 3D Model */}
         <div className="flex-1">
           <Canvas  >
-            <CameraUpdater config={config} />
+            {config && <CameraUpdater config={config} />}
             <ambientLight intensity={1.5} />
             <directionalLight position={[-2, 1, -2]} intensity= {3} />
             
