@@ -4,46 +4,60 @@ import { useState, useRef } from "react"
 
 import { PlusCircle, ImagePlus, X} from "lucide-react"
 import { Button, Input, Label } from '@/components/ui/index'
-import { addCollection } from "../app/(root)/_actions/addCollection";
+import { addCollection} from "../app/(root)/_actions/addCollection";
+import { editCollection } from '@/app/(root)/_actions/editCollection';
 
 import { encodeImageToBase64 } from '@/lib/encodeImageToBase64';
+import { Collection } from '@/types/collection';
 
-const CreateCollectionDialog = () => {
-    const [image, setImage] = useState<string | null>(null)
-    const [base64image , setBase64Image] = useState<string | null>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+const CreateCollectionDialog = ({type, collectionId, onClose, collection} : { type: string, collectionId?: string, onClose?: () => void, collection?: Collection}) => {
+  const [name, setName] = useState(collection?.name || '');
+  const [description, setDescription] = useState(collection?.description || '');
+  const [image, setImage] = useState<string | null>(collection?.image ? `data:image/png;base64,${collection.image}` : null);
+  const [base64image , setBase64Image] = useState<string | null>(collection?.image || null);
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-        const base64String =  await encodeImageToBase64(file);
-        const strippedBase64String = base64String.replace(/^data:image\/[a-z]+;base64,/, '');
-        setBase64Image(strippedBase64String);
-        setImage(base64String); 
-        }
-      };
-    
-      const removeImage = () => {
-        setImage(null)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-      }
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+    const base64String =  await encodeImageToBase64(file);
+    const strippedBase64String = base64String.replace(/^data:image\/[a-z]+;base64,/, '');
+    setBase64Image(strippedBase64String);
+    setImage(base64String); 
+    }
+  };
+  
+  const removeImage = () => {
+    setImage(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const handleSubmit = async (formData: FormData) => {
+    if(type === 'add') {
+      await addCollection(formData);
+    } else if (type === 'edit') {
+      if(!collectionId || !onClose) return;
+      await editCollection(formData, collectionId);
+      onClose();
+    }
+  }
 
   return (
-    <form action={addCollection}>
+    <form action={async (formData: FormData) => await handleSubmit(formData)}>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-right">
               Name
             </Label>
-            <Input id="name" name="name"  className="col-span-3" />
+            <Input value={name} id="name" name="name"  className="col-span-3" onChange={(e) => setName(e.target.value)}/>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description" className="text-right">
               Description
             </Label>
-            <Input id="description" name="description" className="col-span-3" / >
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} id="description" name="description" className="col-span-3" / >
           </div>
 
           <div className="space-y-2">

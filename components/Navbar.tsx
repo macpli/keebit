@@ -63,7 +63,7 @@ const Navbar = async () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <CreateCollectionDialog />
+              <CreateCollectionDialog type={"add"}/>
             </DialogContent>
           </Dialog>
 
