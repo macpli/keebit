@@ -11,9 +11,7 @@ import { Button, Separator, Dialog, DialogContent, DialogDescription, DialogHead
 import AddItemForm from '@/components/AddItemForm'
 import ItemView from "@/components/ItemView/ItemView";
 
-import { ChevronLeft, CuboidIcon as Cube,  PackageOpen as ContainerIcon, Component } from "lucide-react"
-import { revalidatePath } from "next/cache";
-
+import { ChevronLeft,  PackageOpen as ContainerIcon, Component } from "lucide-react"
 
 export default function CollectionPage() {
   const [collectionItems, setCollectionItems] = useState<Collection>();
@@ -47,7 +45,6 @@ export default function CollectionPage() {
       return item;
     });
     setItemsWithoutContainers(items);
-    console.log(items);
   }
 
   async function getContainers(collection: any) {

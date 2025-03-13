@@ -2,7 +2,6 @@
 import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 import { ColorDTO } from "@/types/ColorDTO";
-import { Color } from "three";
 
 export default async function addColor(color: ColorDTO) {
     const session = await auth();
