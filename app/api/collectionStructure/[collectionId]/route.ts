@@ -36,10 +36,12 @@ export async function GET(req: NextRequest, {
                             'itemName', i."name",
                             'description', i."description",
                             'quantity', i."quantity",
-                            'attributes', i."attributes"
+                            'attributes', i."attributes",
+                            'itemType', it."name"
                         )
                     )
                     FROM "items" i
+                    JOIN "item_types" it ON i."typeId" = it."id"
                     WHERE i."containerId" = co."id" AND i."collectionId" = c."id"
                 )
             )

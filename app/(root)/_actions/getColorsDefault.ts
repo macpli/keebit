@@ -1,6 +1,5 @@
 'use server'
 import { pool } from "@/lib/db";
-import { auth } from "@/auth";
 
 export async function getColorsDefault(itemType: string) {
     
