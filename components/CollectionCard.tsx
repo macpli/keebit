@@ -4,9 +4,14 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { Collection } from "@/types/collection"
+import { PatternPlaceholder } from "./PatternPlaceholder"
+
+function base64ToImage(base64: string): string {
+  return `data:image/png;base64,${base64}`;
+}
 
 export function CollectionCard({collection}: {collection: Collection}) {
-    
+    const imageUrl = base64ToImage(collection.image)
     return(
         <Card key={collection.id} className="overflow-hidden">
         <CardHeader className="pb-4">
@@ -20,19 +25,25 @@ export function CollectionCard({collection}: {collection: Collection}) {
           <div className="h-40 bg-muted/20 rounded-md mb-4 overflow-hidden">
             
             <div className="w-full h-full flex items-center justify-center">
-                <Image
-                    src="/placeholder.svg"
-                    alt={`${collection.name} preview`}
-                    width={150}
-                    height={150}
-                    className="object-contain"
-                />
+
+                {imageUrl === "data:image/png;base64,null" ? (
+                    PatternPlaceholder({name: collection.name})
+                    ) : (
+                      <Image
+                      src={imageUrl}
+                      alt={`${collection.name} preview`}
+                      width={150}
+                      height={150}
+                      className="object-contain"
+                  />
+                    )}
             </div>
             
           </div>
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">100 items</div>
             <Button
+              disabled
                 asChild
               variant="ghost"
               size="sm"

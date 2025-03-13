@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, ImagePlus, X} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ import { Button } from './ui/button';
 import { revalidatePath } from "next/cache";
 import { addCollection } from "../app/(root)/_actions/addCollection";
 import { signOutAction } from '@/app/(root)/_actions/signOut';
+import CreateCollectionDialog from './CreateCollectionDialog';
 
 const Navbar = async () => {
   const session = await auth();
@@ -58,33 +59,11 @@ const Navbar = async () => {
               <DialogHeader>
                 <DialogTitle>Add collection</DialogTitle>
                 <DialogDescription>
-                  Create your collection here. Click save when you're done.
+                  Create your collection here. Click submit when you're done.
                 </DialogDescription>
               </DialogHeader>
-              <form action={async (formData: FormData)=>{
-                "use server";
-                await addCollection(formData);
-                // dialogKey = Date.now();
-                revalidatePath('/collections');
-              }}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input id="name" name="name"  className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Input id="description" name="description" className="col-span-3" / >
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Save changes</Button>
-                </DialogFooter>
-              </form>
+
+              <CreateCollectionDialog />
             </DialogContent>
           </Dialog>
 

@@ -5,4 +5,5 @@ export type Collection = {
     description?: string;
     createdAt: string;
     updatedAt: string;
+    image: string;
   };
