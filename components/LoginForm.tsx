@@ -72,7 +72,7 @@ export async function LoginForm({
 
           <form className="mt-4" action={async () => {
                       "use server";
-                      await signIn('github', { prompt: "login", redirectTo: '/collections' }); 
+                      await signIn('github', { prompt: "login", redirectTo: '/' }); 
                     }}>
               <Button variant="outline" className="w-full" type="submit">
                 Login with Github
