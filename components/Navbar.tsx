@@ -25,7 +25,6 @@ import {
 import { Button } from './ui/button';
 import { revalidatePath } from 'next/cache';
 
-import { revalidatePath } from "next/cache";
 import { addCollection } from "../app/(root)/_actions/addCollection";
 import { signOutAction } from '@/app/(root)/_actions/signOut';
 import CreateCollectionDialog from './CreateCollectionDialog';
