@@ -84,7 +84,8 @@ const Navbar = async () => {
                 <form
                   action={async ()=> {
                     "use server";
-                    signOutAction();
+                    signOut();
+                    revalidatePath("/");
                   }}
                 >
                   <button type='submit'>Logout</button>
