@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link  from "next/link"
 import React, { useState } from "react"
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export function RegisterForm({
   className,
@@ -39,9 +41,8 @@ export function RegisterForm({
     })
 
     const data = await response.json()
+    redirect("/login");
   }
-
-  
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

@@ -205,7 +205,7 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
         {/* 3D Model */}
         <div className="flex-1">
           <Canvas  >
-            <CameraUpdater config={config} />
+            {config && <CameraUpdater config={config} />}
             <ambientLight intensity={1.5} />
             <directionalLight position={[-2, 1, -2]} intensity= {3} />
             
