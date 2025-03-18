@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from './ui/button';
+import { revalidatePath } from 'next/cache';
 
 
 const Navbar = async () => {
@@ -42,7 +43,8 @@ const Navbar = async () => {
                 <form
                   action={async () => {
                     "use server";
-                    await signOut({ redirectTo: "/" }); // Usuwa sesję użytkownika
+                    await signOut();
+                    revalidatePath("/"); 
                   }}
                 >
                   <button type='submit'>Logout</button>
