@@ -47,18 +47,15 @@ const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
             <CollapsibleContent>
               <div className="p-4">
                 {item ? (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="border rounded-lg h-[300px]">
-                      {/* TODO: IMPLEMENT THREEJS 3D MODELS */}
-                      <div>
-                        <div className='flex  fixed z-10 p-1 items-center space-x-2'>
+                  // Model Viewer
+                  <div className="grid grid-cols-[2fr_1fr] gap-4">
+                    <div className="border rounded-lg h-[400px]">
+                        <div className='flex absolute z-10 p-1 items-center space-x-2'>
                             <Image />
                             <Switch onClick={handleToggleItemVIew} checked={showModel} onChange={handleToggleItemVIew} />
                             <Rotate3d />
-                            {/* <Label htmlFor="airplane-mode">3D Model</Label> */}
                         </div>
 
-                      </div>
                         {showModel ? (
                             <ModelViewer item={item}/>
                         ) : (
@@ -68,6 +65,8 @@ const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
                             </div>
                         )} 
                     </div>
+                    
+                    {/* Item Details */}
                     <div className="border rounded-lg p-4">
                       <h3 className="font-medium font-semibold mb-2">{item.itemName}</h3>
                       <p>{item.description}</p>

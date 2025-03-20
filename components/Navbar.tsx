@@ -1,6 +1,7 @@
 import { auth, signOut, signIn } from '@/auth';
 import Link from 'next/link';
 import React from 'react';
+import Image from "next/image"
 
 import {
   Dialog,
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, ImagePlus, X} from "lucide-react"
+import { PlusCircle, ImagePlus, X, Keyboard} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +38,8 @@ const Navbar = async () => {
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
       
-      <div className='text-center ml-5'>
+      <div className='text-center ml-5 flex items-center gap-2'>
+        <Keyboard />
         keebit
       </div>
 
@@ -95,6 +97,13 @@ const Navbar = async () => {
 
           </DropdownMenu>
 
+          <Image
+              src={session?.user.image ?? '/default-profile.png'}
+              alt={`Profile Picture of ${session.user.name}`}
+              width={42}
+              height={42}
+              className="rounded-full"
+          />
         </div>
 
       ) : (

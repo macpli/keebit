@@ -1,7 +1,7 @@
 'use client';
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { PatternPlaceholder } from "./PatternPlaceholder"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,Separator, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DialogTrigger, Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/index"
@@ -10,6 +10,7 @@ import { FolderIcon, AlertCircle, PlusCircle, Trash2, Pencil, MoreVertical } fro
 import { Collection } from "@/types/collection"
 import { deleteCollection } from "@/app/(root)/_actions/deleteCollection";
 import CreateCollectionDialog from "./CreateCollectionDialog";
+import { getItemsCountAction } from "@/app/(root)/_actions/getItemsCountAction";
 
 function base64ToImage(base64: string): string {
   return `data:image/png;base64,${base64}`;
@@ -27,6 +28,9 @@ export function CollectionCard({collection}: {collection: Collection}) {
     description: collection.description,
     image: collection
   })
+  const [itemCount, setItemCount] = useState<number>(0);
+
+  const fetchedItems = useRef<string | null>(null);  
   
   const imageUrl = base64ToImage(collection.image)
   
@@ -52,6 +56,19 @@ export function CollectionCard({collection}: {collection: Collection}) {
     setCollectionToDelete(null);
     setDeleteDialogOpen(false);
   }
+
+  const getItems = async (collectionId: string) => {
+    const {count} = await getItemsCountAction(collectionId);
+    setItemCount(count);
+    return count;
+  }
+
+  useEffect(() => {
+    if(collection?.id && fetchedItems.current !== collection.id) {
+      getItems(collection.id);
+      fetchedItems.current = collection.id;
+    }
+  }, [collection?.id])
 
   let dialogKey = Date.now();  
 
@@ -113,7 +130,7 @@ export function CollectionCard({collection}: {collection: Collection}) {
                   
           </div>
           <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">100 items</div>
+            <div className="text-sm text-muted-foreground">{itemCount} items</div>
             <Button
               disabled
                 asChild

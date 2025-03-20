@@ -56,9 +56,8 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
   const [colors, setColors] = useState<Color[]>([]); 
   const [colorToEdit, setColorToEdit] = useState<Color>();
   const [config, setConfig] = useState<CameraConfig>();  
+  const [colorsToSave, setColorsToSave] = useState<ColorDTO[]>([]);
   
- 
-
   // Slider values
   const [rgb, setRgb] = useState<{ r: number; g: number; b: number }>({
       r: colorToEdit?.r || 105, 
@@ -105,11 +104,12 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     if (colorToEdit) {
         setColorToEdit({ ...colorToEdit, ...newRgb });
     }
+
+    updateModelColor();
   }
 
-  // Sets the color on the model and triggers the handleAddColor to add / update to database
-  const setModelColor = async () => {
-    if (colorToEdit) {
+  const updateModelColor = () => {
+    if(colorToEdit){
       const newColor = new THREE.Color(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
       
       // Find the material with the matching UUID
@@ -120,17 +120,31 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
           }
       });
 
-      const colorData: ColorDTO = {
+      const newColorToSave: ColorDTO = {
         item_id: item.itemId,
         model_name: item.itemType,
-        r: rgb.r,
-        g: rgb.g,
-        b: rgb.b,
+        r: colorToEdit.r,
+        g: colorToEdit.g,
+        b: colorToEdit.b,
         material_index: colorToEdit.material_index,
-      };
-
-      handleAddColor(colorData);
+      }
+      setColorsToSave((prevColors) => {
+        const updatedColors = prevColors.some(c => c.material_index === newColorToSave.material_index)
+          ? prevColors.map(c => c.material_index === newColorToSave.material_index ? newColorToSave : c)
+          : [...prevColors, newColorToSave];
+  
+        return updatedColors;
+      });
     }
+  }
+
+  // Sets the color on the model and triggers the handleAddColor to add / update to database
+  const setModelColor = async () => {
+
+      colorsToSave.forEach((color) => {
+        console.log(color);
+        handleAddColor(color);
+      })
   }
 
   const handleAddColor = async (colorData: ColorDTO) => {
@@ -223,7 +237,9 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
           <h3 className="font-medium text-sm mb-4">Color Editor</h3>
           
           {/* Model Colors */}
-          <div>
+          { !colorToEdit && (
+
+          <div >
             { !colorToEdit && colors.map((color: Color, idx) => (
                 <div key={idx} onClick={() => { setColorToEdit(color); setRgb({ r: color.r, g: color.g, b: color.b }); }} className="cursor-pointer p-2 rounded-md hover:bg-muted">
                     <div
@@ -233,7 +249,13 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
                     />
                 </div>
             ))}
+          
+            <div className="mt-10 p-2">
+              <Button className="w-full" onClick={setModelColor}>Set Color</Button>
+            </div>
+
           </div>
+          )}
 
             {/* Color editor */}
             {colorToEdit && (
@@ -297,7 +319,6 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
                     <Button asChild variant="outline" size="icon" className="flex-1 mb-4" onClick={() => setColorToEdit(undefined)}>
                         <ChevronLeft className="m-0"/>
                     </Button>
-                    <Button className="flex-3" onClick={setModelColor}>Set Color</Button>
                 </div>
                 
               </div>
