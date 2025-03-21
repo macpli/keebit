@@ -3,17 +3,6 @@ import Link from 'next/link';
 import React from 'react';
 import Image from "next/image"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
 import { PlusCircle, ImagePlus, X, Keyboard} from "lucide-react"
 import {
   DropdownMenu,
@@ -26,14 +15,8 @@ import {
 import { Button } from './ui/button';
 import { revalidatePath } from 'next/cache';
 
-import { addCollection } from "../app/(root)/_actions/addCollection";
-import { signOutAction } from '@/app/(root)/_actions/signOut';
-import CreateCollectionDialog from './CreateCollectionDialog';
-
 const Navbar = async () => {
   const session = await auth();
-
-  let dialogKey = Date.now();  
 
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
@@ -45,29 +28,7 @@ const Navbar = async () => {
 
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
-          <Dialog 
-          key={dialogKey} 
-          >
-            <div className=''>
-              <DialogTrigger asChild >
-                <Button >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Collection
-                </Button>
-              </DialogTrigger>
-            </div>
-            
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add collection</DialogTitle>
-                <DialogDescription>
-                  Create your collection here. Click submit when you're done.
-                </DialogDescription>
-              </DialogHeader>
 
-              <CreateCollectionDialog type={"add"}/>
-            </DialogContent>
-          </Dialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -77,6 +38,9 @@ const Navbar = async () => {
             <DropdownMenuContent>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link href={`/profile/${session.user.id}`}>Profile</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href='/'>Collections</Link>
               </DropdownMenuItem>
