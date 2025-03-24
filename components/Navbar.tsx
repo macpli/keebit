@@ -2,7 +2,9 @@ import { auth, signOut, signIn } from '@/auth';
 import Link from 'next/link';
 import React from 'react';
 import Image from "next/image"
+import { revalidatePath } from 'next/cache';
 
+import defaultUserImage from '../public/default-user-image.png';
 import { PlusCircle, ImagePlus, X, Keyboard} from "lucide-react"
 import {
   DropdownMenu,
@@ -13,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from './ui/button';
-import { revalidatePath } from 'next/cache';
 
 const Navbar = async () => {
   const session = await auth();
@@ -38,36 +39,47 @@ const Navbar = async () => {
             <DropdownMenuContent>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href={`/profile/${session.user.id}`}>Profile</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href='/'>Collections</Link>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <form
+              <DropdownMenuItem asChild>
+                <form 
                   action={async ()=> {
                     "use server";
                     await signOut();
                     revalidatePath("/"); 
                   }}
                 >
-                  <button type='submit'>Logout</button>
+                  <button type='submit' className='w-full text-left'>Logout</button>
                 </form>
               </DropdownMenuItem>
             </DropdownMenuContent>
 
           </DropdownMenu>
 
+          { (session?.user.image ?? '').length > 0 ? (
+            
           <Image
-              src={session?.user.image ?? '/default-profile.png'}
+              src={session?.user.image ?? ''}
               alt={`Profile Picture of ${session.user.name}`}
               width={42}
               height={42}
               className="rounded-full"
           />
+          ) : (
+              <Image src={defaultUserImage}
+              alt={`Profile Picture of ${session.user.name}`}
+              width={42}
+              height={42}
+              className="rounded-full"
+              />
+          )}
+
         </div>
 
       ) : (

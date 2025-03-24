@@ -7,17 +7,19 @@ import Link from "next/link";
 import { Item } from "@/types/item";
 
 import { Button, Separator, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, ScrollArea, ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/index";
+import { ChevronLeft, Share,  PackageOpen as ContainerIcon, Component } from "lucide-react"
 
+import { publishCollection } from "../../_actions/publishCollection";
 import AddItemForm from '@/components/AddItemForm'
 import ItemView from "@/components/ItemView/ItemView";
 
-import { ChevronLeft,  PackageOpen as ContainerIcon, Component } from "lucide-react"
 
 export default function CollectionPage() {
   const [collectionItems, setCollectionItems] = useState<Collection>();
   const [itemsWithoutContainers, setItemsWithoutContainers] = useState([]);
   const [containers, setContainers] = useState([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isCreateNewCollectionDialogOpen, setIsCreateNewCollectionDialogOpen] = useState(false);
   const [isItemViewOpen, setIsItemViewOpen] = useState(false);
   const [itemToDisplay, setItemToDisplay] = useState<Item>();
 
@@ -71,10 +73,14 @@ export default function CollectionPage() {
   } 
 
   const handleFormSuccess = async () => {
-    console.log('in handleFormSuccess');
-    setIsDialogOpen(false);
+    setIsCreateNewCollectionDialogOpen(false);
     await fetchData();
-    };
+  };
+
+  const handlePublish = async () => {
+    await publishCollection(params.collectionId);
+    setIsPublishDialogOpen(false);
+  }
 
   const toggleItemView = (e: Item) => {
     if(e === itemToDisplay) {
@@ -107,10 +113,11 @@ export default function CollectionPage() {
           </Link>
         </Button>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* Create new collection dialog */}
+        <Dialog open={isCreateNewCollectionDialogOpen} onOpenChange={setIsCreateNewCollectionDialogOpen}>
           <div className=''>
             <DialogTrigger asChild >
-              <Button variant="outline" onClick={() => setIsDialogOpen(true)}>New</Button>
+              <Button variant="outline" onClick={() => setIsCreateNewCollectionDialogOpen(true)}>New</Button>
             </DialogTrigger>
           </div>
 
@@ -123,6 +130,29 @@ export default function CollectionPage() {
             </DialogHeader>
 
             <AddItemForm collectionId={params.collectionId} onSuccess={handleFormSuccess}/>
+
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Share className="h-5 w-5 mr-1" />
+              Publish
+              </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Publish</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to publish this collection?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex justify-end gap-4">
+              <Button variant="outline" onClick={() => setIsPublishDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handlePublish}>Publish</Button>
+            </div>
 
           </DialogContent>
         </Dialog>

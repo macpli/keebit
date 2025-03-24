@@ -50,8 +50,6 @@ export default async function UsersPage() {
   const collections = await fetchCollections(session.user.id);  
   const publicCollections = await fetchPublicCollections();
 
-  console.log(publicCollections);
-
   let dialogKey = Date.now();  
 
   return (

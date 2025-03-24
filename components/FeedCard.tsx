@@ -2,6 +2,8 @@ import React from 'react'
 
 import * as UI from '@/components/ui/index'
 import { Badge,  Pencil, Trash2, MoreVertical, Heart, MessageSquare, Bookmark  } from 'lucide-react'
+import defaultUserImage from '../public/default-user-image.png';
+
 import { PatternPlaceholder } from './PatternPlaceholder'
 import { Collection } from '@/types/collection'
 
@@ -10,14 +12,13 @@ interface FeedCardProps {
   }
   
   export default function FeedCard({ collection }: FeedCardProps) {
-    console.log(collection)
   return (
       <UI.Card key={collection.id} className="overflow-hidden">
         <UI.CardHeader className="pb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              <UI.Avatar>
-                <UI.AvatarImage src={ ''} alt={''} />
+              <UI.Avatar className='w-8'>
+                <UI.AvatarImage src={defaultUserImage.src} alt={'profile picture'} width={15} height={15} />
                 <UI.AvatarFallback>{''}</UI.AvatarFallback>
               </UI.Avatar>
               <div>
