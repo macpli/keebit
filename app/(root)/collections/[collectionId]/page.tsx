@@ -63,7 +63,7 @@ export default function CollectionPage() {
       const res = await fetch(`${baseUrl}/api/collectionStructure/${collectionId}`, {
         cache: "no-store", // Avoid stale data
       });
-      const data = await res.json(); console.log(data)
+      const data = await res.json();
       setCollectionItems(data.collection);
       return data.collection;
     } catch (error) {
