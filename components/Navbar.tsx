@@ -1,11 +1,14 @@
-import { auth, signOut, signIn } from '@/auth';
+'use client';
+import { signIn, signOut, useSession } from "next-auth/react"
+import { auth } from '@/auth';
 import Link from 'next/link';
 import React from 'react';
 import Image from "next/image"
 import { revalidatePath } from 'next/cache';
+// import { headers } from "next/headers";
 
 import defaultUserImage from '../public/default-user-image.png';
-import { PlusCircle, ImagePlus, X, Keyboard} from "lucide-react"
+import { Keyboard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +18,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from './ui/button';
+import BackButton from './BackButton';
 
-const Navbar = async () => {
-  const session = await auth();
+const Navbar = () => {
+  const { data: session } = useSession()
+
+  // const headersList = headers();
+
+  // const fullUrl = (await headersList).get("referer") || "Unknown";
+  // console.log(fullUrl);
 
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
@@ -25,7 +34,11 @@ const Navbar = async () => {
       <div className='text-center ml-5 flex items-center gap-2'>
         <Keyboard />
         keebit
+        
+        <BackButton />
+        
       </div>
+
 
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
@@ -48,15 +61,9 @@ const Navbar = async () => {
 
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <form 
-                  action={async ()=> {
-                    "use server";
-                    await signOut();
-                    revalidatePath("/"); 
-                  }}
-                >
-                  <button type='submit' className='w-full text-left'>Logout</button>
-                </form>
+                
+                <button onClick={() => signOut()} className='w-full text-left'>Logout</button>
+                
               </DropdownMenuItem>
             </DropdownMenuContent>
 
