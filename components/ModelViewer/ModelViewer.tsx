@@ -142,7 +142,6 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
   const setModelColor = async () => {
 
       colorsToSave.forEach((color) => {
-        console.log(color);
         handleAddColor(color);
       })
   }
@@ -211,8 +210,6 @@ const ModelViewer: React.FC<{ item: Item }> =  ({ item }) => {
     setConfig(CameraConfiguration(item.itemType));
     setColorToEdit(undefined);
     configureModelSettings();
-
-    console.log(item.itemType);
   }, [item]);
 
   return (

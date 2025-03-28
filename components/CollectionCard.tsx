@@ -109,7 +109,7 @@ export function CollectionCard({collection}: {collection: Collection}) {
                   Edit
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => openPublishDialog()}>
+              <DropdownMenuItem onClick={openPublishDialog}>
                 <Share className="mr-2 h-4 w-4" />
                   Publish
               </DropdownMenuItem>

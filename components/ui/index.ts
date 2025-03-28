@@ -10,4 +10,6 @@ export { Card, CardFooter, CardContent, CardDescription, CardHeader, CardTitle }
 export {  ResizableHandle, ResizablePanel, ResizablePanelGroup } from './resizable';
 export { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from './alert-dialog';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-export { Avatar, AvatarFallback, AvatarImage, } from "@/components/ui/avatar"
+export { Avatar, AvatarFallback, AvatarImage, } from "@/components/ui/avatar";
+export {Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form"
+export {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select"

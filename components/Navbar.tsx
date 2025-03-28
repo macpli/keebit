@@ -1,11 +1,9 @@
 'use client';
 import { signIn, signOut, useSession } from "next-auth/react"
-import { auth } from '@/auth';
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from "next/image"
-import { revalidatePath } from 'next/cache';
-// import { headers } from "next/headers";
+import getUserId from "@/app/(root)/_actions/getUserId";
 
 import defaultUserImage from '../public/default-user-image.png';
 import { Keyboard } from "lucide-react"
@@ -22,11 +20,16 @@ import BackButton from './BackButton';
 
 const Navbar = () => {
   const { data: session } = useSession()
+  const [userId, setUserId] = React.useState('');
 
-  // const headersList = headers();
+  useEffect(() => {
+      getUserId().then(data => {
+        if (data) {
+          setUserId(data);
+        }
+      });
+    }, [])
 
-  // const fullUrl = (await headersList).get("referer") || "Unknown";
-  // console.log(fullUrl);
 
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
@@ -43,7 +46,6 @@ const Navbar = () => {
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
 
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">{session.user.name}</Button>
@@ -53,7 +55,7 @@ const Navbar = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href={`/profile/${session.user.id}`}>Profile</Link>
+                <Link href={`/profile/${userId}`}>Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href='/'>Collections</Link>

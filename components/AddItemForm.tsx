@@ -128,7 +128,7 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
                 <SelectContent>
                   <SelectItem value="keyboard">Keyboard</SelectItem>
                   <SelectItem value="switch">Switch</SelectItem>
-                  {customTypes.map((type, idx) => (
+                  {customTypes.map((type: any, idx) => (
                     <SelectItem key={idx} value={type.name}>
                       {type.name}
                     </SelectItem>
