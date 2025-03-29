@@ -1,6 +1,6 @@
 "use client";
 import { Collection } from "@/types/collection";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -8,7 +8,18 @@ import { Item } from "@/types/item";
 
 import * as UI from "@/components/ui/index";
 
-import { Settings,MoreVertical,Trash2,Pencil,ChevronLeft,Share,PackageOpen as ContainerIcon,Component, AlertCircle } from "lucide-react";
+import {
+  Settings,
+  MoreVertical,
+  Trash2,
+  Pencil,
+  ChevronLeft,
+  Share,
+  PackageOpen as ContainerIcon,
+  Component,
+  AlertCircle,
+  ArchiveRestore,
+} from "lucide-react";
 
 import AddItemForm from "@/components/AddItemForm";
 import ItemView from "@/components/ItemView/ItemView";
@@ -16,6 +27,8 @@ import EditItemForm from "@/components/EditItemForm";
 import { publishCollection } from "../../_actions/publishCollection";
 import deleteItem from "../../_actions/deleteItem";
 import { revalidatePath } from "next/cache";
+import moveItemToContainer from "../../_actions/moveItemToContainer";
+import removeItemFromContainer from "../../_actions/removeItemFromContainer";
 
 export default function CollectionPage() {
   const [collectionItems, setCollectionItems] = useState<Collection>();
@@ -35,6 +48,7 @@ export default function CollectionPage() {
 
   const params = useParams<{ collectionId: string }>();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const router = useRouter();
 
   useEffect(() => {
     fetchData();
@@ -121,6 +135,16 @@ export default function CollectionPage() {
     fetchData();
   };
 
+  const handleMoveItemToContainer = async (itemId: string, containerId: string) => {
+    await moveItemToContainer(itemId, containerId);
+    fetchData();
+  };
+
+  const handleRemoveItemFromContainer = async (itemId: string) => {
+    await removeItemFromContainer(itemId);
+    fetchData();
+  }
+
   if (!params.collectionId) {
     return <div>Collection not found</div>;
   }
@@ -171,6 +195,7 @@ export default function CollectionPage() {
           </UI.DialogContent>
         </UI.Dialog>
 
+        {/* Publish collection dialog */}
         <UI.Dialog
           open={isPublishDialogOpen}
           onOpenChange={setIsPublishDialogOpen}
@@ -224,7 +249,7 @@ export default function CollectionPage() {
                     className="bg-white p-4 rounded-md flex gap-2 items-center"
                   >
                     <div
-                      onClick={() => (toggleItemView(item), console.log(item))}
+                      onClick={() => toggleItemView(item)}
                       className={`flex-[0_0_90%]
                       p-3 rounded-md cursor-pointer transition-colors ${
                         itemToDisplay?.itemId === item.itemId
@@ -253,6 +278,7 @@ export default function CollectionPage() {
                         Quantity: {item.quantity}
                       </p>
                     </div>
+                    {/* Item Actions */}
                     <UI.DropdownMenu>
                       <UI.DropdownMenuTrigger asChild>
                         <UI.Button
@@ -264,7 +290,35 @@ export default function CollectionPage() {
                           <span className="sr-only">Open menu</span>
                         </UI.Button>
                       </UI.DropdownMenuTrigger>
+
                       <UI.DropdownMenuContent align="end">
+                        <UI.DropdownMenuGroup>
+                          <UI.DropdownMenuSub>
+                            <UI.DropdownMenuSubTrigger>
+                              Move to a container
+                            </UI.DropdownMenuSubTrigger>
+                            <UI.DropdownMenuPortal>
+                              <UI.DropdownMenuSubContent>
+                                {containers.map((container: any) => (
+                                  <UI.DropdownMenuItem
+                                    key={container.containerId}
+                                    onClick={() => handleMoveItemToContainer(item.itemId, container.containerId)}
+                                  >
+                                    {container.name}
+                                  </UI.DropdownMenuItem>
+                                ))}
+                                <UI.DropdownMenuSeparator />
+                                <UI.DropdownMenuItem
+                                  className="text-muted-foreground"
+                                  onClick={() => {}}
+                                >
+                                  Create new container
+                                </UI.DropdownMenuItem>
+                              </UI.DropdownMenuSubContent>
+                            </UI.DropdownMenuPortal>
+                          </UI.DropdownMenuSub>
+                        </UI.DropdownMenuGroup>
+
                         <UI.DropdownMenuItem
                           onClick={() => (
                             setItemToEdit(item), setIsEditDialogOpen(true)
@@ -278,7 +332,11 @@ export default function CollectionPage() {
 
                         <UI.DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => (setDeleteDialogOpen(true), setItemToDelete(item.itemId))}>
+                          onClick={() => (
+                            setDeleteDialogOpen(true),
+                            setItemToDelete(item.itemId)
+                          )}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </UI.DropdownMenuItem>
@@ -313,34 +371,80 @@ export default function CollectionPage() {
                       {container.items.map((item: any) => (
                         <div
                           key={item.itemId}
-                          onClick={() => toggleItemView(item)}
-                          className={`
-                        p-3 rounded-md cursor-pointer transition-colors ${
-                          itemToDisplay?.itemId === item.itemId
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-card hover:bg-muted"
-                        }
-                        `}
+                          className="flex gap-2 items-center"
                         >
-                          <h3 className="text-medium">{item.itemName}</h3>
-                          <p
-                            className={`text-sm ${
-                              itemToDisplay?.itemId === item.itemId
-                                ? "text-primary-foreground/80"
-                                : "text-muted-foreground"
-                            }`}
+                          <div
+                            onClick={() => toggleItemView(item)}
+                            className={` flex-[0_0_90%]
+                          p-3 rounded-md cursor-pointer transition-colors ${
+                            itemToDisplay?.itemId === item.itemId
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-card hover:bg-muted"
+                          }
+                          `}
                           >
-                            {item.description}
-                          </p>
-                          <p
-                            className={`text-sm ${
-                              itemToDisplay?.itemId === item.itemId
-                                ? "text-primary-foreground/80"
-                                : "text-muted-foreground"
-                            }`}
-                          >
-                            Quantity: {item.quantity}
-                          </p>
+                            <h3 className="text-medium">{item.itemName}</h3>
+                            <p
+                              className={`text-sm ${
+                                itemToDisplay?.itemId === item.itemId
+                                  ? "text-primary-foreground/80"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {item.description}
+                            </p>
+                            <p
+                              className={`text-sm ${
+                                itemToDisplay?.itemId === item.itemId
+                                  ? "text-primary-foreground/80"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              Quantity: {item.quantity}
+                            </p>
+                          </div>
+
+                          {/* Item Actions */}
+                          <UI.DropdownMenu>
+                            <UI.DropdownMenuTrigger asChild>
+                              <UI.Button
+                                variant="ghost"
+                                size="icon"
+                                className="flex-[0_10%]"
+                              >
+                                <MoreVertical className="h-24 w-24" />
+                                <span className="sr-only">Open menu</span>
+                              </UI.Button>
+                            </UI.DropdownMenuTrigger>
+                            <UI.DropdownMenuContent align="end">
+
+                              <UI.DropdownMenuItem onClick={() => handleRemoveItemFromContainer(item.itemId)}>
+                                Remove from container
+                              </UI.DropdownMenuItem>
+
+                              <UI.DropdownMenuItem
+                                onClick={() => (
+                                  setItemToEdit(item), setIsEditDialogOpen(true)
+                                )}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </UI.DropdownMenuItem>
+
+                              <UI.DropdownMenuSeparator />
+
+                              <UI.DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => (
+                                  setDeleteDialogOpen(true),
+                                  setItemToDelete(item.itemId)
+                                )}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </UI.DropdownMenuItem>
+                            </UI.DropdownMenuContent>
+                          </UI.DropdownMenu>
                         </div>
                       ))}
                     </div>
@@ -369,34 +473,32 @@ export default function CollectionPage() {
       </UI.Dialog>
 
       {/* Delete Item Dialog */}
-      
       <UI.AlertDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       >
         {itemToDelete && (
-
           <UI.AlertDialogContent>
-          <UI.AlertDialogHeader>
-            <UI.AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Delete Item
-            </UI.AlertDialogTitle>
-            <UI.AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              item from the collection.
-            </UI.AlertDialogDescription>
-          </UI.AlertDialogHeader>
-          <UI.AlertDialogFooter>
-            <UI.AlertDialogCancel>Cancel</UI.AlertDialogCancel>
-            <UI.AlertDialogAction
-              onClick={async () => await handleDeleteItem(itemToDelete)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </UI.AlertDialogAction>
-          </UI.AlertDialogFooter>
-         </UI.AlertDialogContent>
+            <UI.AlertDialogHeader>
+              <UI.AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Delete Item
+              </UI.AlertDialogTitle>
+              <UI.AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                item from the collection.
+              </UI.AlertDialogDescription>
+            </UI.AlertDialogHeader>
+            <UI.AlertDialogFooter>
+              <UI.AlertDialogCancel>Cancel</UI.AlertDialogCancel>
+              <UI.AlertDialogAction
+                onClick={async () => await handleDeleteItem(itemToDelete)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </UI.AlertDialogAction>
+            </UI.AlertDialogFooter>
+          </UI.AlertDialogContent>
         )}
       </UI.AlertDialog>
     </div>
