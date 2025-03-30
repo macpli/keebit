@@ -26,6 +26,7 @@ import {
 
 import addItemType from "@/app/(root)/_actions/addItemType"
 import getItemTypes from "@/app/(root)/_actions/getItemTypes"
+import addContainer from "@/app/(root)/_actions/addContainer"
 
 export default function AddItemForm({ collectionId, onSuccess }: { collectionId: string; onSuccess: () => void; }) {
   const [customTypes, setCustomTypes] = useState<string[]>([]);
@@ -68,7 +69,7 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
       if (selectedType === "item") {
         await addItem(data, collectionId);
       } else if (selectedType === "container") {
-        console.log("Adding Container");
+        await addContainer(data.name, data.description, collectionId);
       } else if (selectedType === "createItemType") {
         await addItemType(data);
       } else {

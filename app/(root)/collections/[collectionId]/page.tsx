@@ -19,6 +19,8 @@ import {
   Component,
   AlertCircle,
   ArchiveRestore,
+  PackageOpen,
+  Package
 } from "lucide-react";
 
 import AddItemForm from "@/components/AddItemForm";
@@ -29,6 +31,8 @@ import deleteItem from "../../_actions/deleteItem";
 import { revalidatePath } from "next/cache";
 import moveItemToContainer from "../../_actions/moveItemToContainer";
 import removeItemFromContainer from "../../_actions/removeItemFromContainer";
+import deleteContainer from "../../_actions/deleteContainer";
+import { set } from "react-hook-form";
 
 export default function CollectionPage() {
   const [collectionItems, setCollectionItems] = useState<Collection>();
@@ -45,6 +49,11 @@ export default function CollectionPage() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  const [deleteContainerDialogOpen, setDeleteContainerDialogOpen] = useState(false);
+  const [containerToDelete, setContainerToDelete] = useState<string | null>(null);
+
+  const [showActions, setShowActions] = useState<string | null>(null);
 
   const params = useParams<{ collectionId: string }>();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -120,11 +129,6 @@ export default function CollectionPage() {
     }
   };
 
-  const handleEditClick = (item: Item) => {
-    setItemToEdit(item);
-    setIsEditDialogOpen(true);
-  };
-
   const handleEditSucces = async () => {
     setIsEditDialogOpen(false);
     await fetchData();
@@ -135,7 +139,10 @@ export default function CollectionPage() {
     fetchData();
   };
 
-  const handleMoveItemToContainer = async (itemId: string, containerId: string) => {
+  const handleMoveItemToContainer = async (
+    itemId: string,
+    containerId: string
+  ) => {
     await moveItemToContainer(itemId, containerId);
     fetchData();
   };
@@ -143,12 +150,16 @@ export default function CollectionPage() {
   const handleRemoveItemFromContainer = async (itemId: string) => {
     await removeItemFromContainer(itemId);
     fetchData();
+  };
+
+  const handleDeleteContainer = async (containerId: string) => {
+    await deleteContainer(containerId);
+    fetchData();
   }
 
   if (!params.collectionId) {
     return <div>Collection not found</div>;
   }
-
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-2 ">{collectionItems?.name}</h1>
@@ -156,12 +167,12 @@ export default function CollectionPage() {
 
       <UI.Separator className="mt-2 mb-6" />
 
-      <div className="flex gap-4">
-        <UI.Button asChild variant="outline" size="icon" className="mb-4">
+      <div className="flex gap-4 mb-4">
+        {/* <UI.Button asChild variant="outline" size="icon" className="mb-4">
           <Link href="/">
             <ChevronLeft />
           </Link>
-        </UI.Button>
+        </UI.Button> */}
 
         {/* Create new collection dialog */}
         <UI.Dialog
@@ -246,16 +257,17 @@ export default function CollectionPage() {
                 {itemsWithoutContainers.map((item: Item) => (
                   <div
                     key={item.itemId}
-                    className="bg-white p-4 rounded-md flex gap-2 items-center"
+                    className={` p-2 rounded-md flex gap-2 items-center transition-colors ${
+                      itemToDisplay?.itemId === item.itemId
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card hover:bg-muted"
+                    }`}
+                    onMouseEnter={() => setShowActions(item.itemId)}
                   >
                     <div
                       onClick={() => toggleItemView(item)}
                       className={`flex-[0_0_90%]
-                      p-3 rounded-md cursor-pointer transition-colors ${
-                        itemToDisplay?.itemId === item.itemId
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card hover:bg-muted"
-                      }
+                      p-3 rounded-md cursor-pointer 
                     `}
                     >
                       <h3 className="font-medium">{item.itemName}</h3>
@@ -279,69 +291,76 @@ export default function CollectionPage() {
                       </p>
                     </div>
                     {/* Item Actions */}
-                    <UI.DropdownMenu>
-                      <UI.DropdownMenuTrigger asChild>
-                        <UI.Button
-                          variant="ghost"
-                          size="icon"
-                          className="flex-[0_10%]"
-                        >
-                          <MoreVertical className="h-24 w-24" />
-                          <span className="sr-only">Open menu</span>
-                        </UI.Button>
-                      </UI.DropdownMenuTrigger>
+                    {itemToDisplay?.itemId == item.itemId && (
+                      <UI.DropdownMenu>
+                        <UI.DropdownMenuTrigger asChild>
+                          <UI.Button
+                            variant="ghost"
+                            size="icon"
+                            className="flex-[0_05%]"
+                          >
+                            <Settings className="h-10 w-10" />
+                            <span className="sr-only">Open menu</span>
+                          </UI.Button>
+                        </UI.DropdownMenuTrigger>
 
-                      <UI.DropdownMenuContent align="end">
-                        <UI.DropdownMenuGroup>
-                          <UI.DropdownMenuSub>
-                            <UI.DropdownMenuSubTrigger>
-                              Move to a container
-                            </UI.DropdownMenuSubTrigger>
-                            <UI.DropdownMenuPortal>
-                              <UI.DropdownMenuSubContent>
-                                {containers.map((container: any) => (
+                        <UI.DropdownMenuContent align="end">
+                          <UI.DropdownMenuGroup>
+                            <UI.DropdownMenuSub>
+                              <UI.DropdownMenuSubTrigger>
+                                Move to a container
+                              </UI.DropdownMenuSubTrigger>
+                              <UI.DropdownMenuPortal>
+                                <UI.DropdownMenuSubContent>
+                                  {containers.map((container: any) => (
+                                    <UI.DropdownMenuItem
+                                      key={container.containerId}
+                                      onClick={() =>
+                                        handleMoveItemToContainer(
+                                          item.itemId,
+                                          container.containerId
+                                        )
+                                      }
+                                    >
+                                      {container.name}
+                                    </UI.DropdownMenuItem>
+                                  ))}
+                                  <UI.DropdownMenuSeparator />
                                   <UI.DropdownMenuItem
-                                    key={container.containerId}
-                                    onClick={() => handleMoveItemToContainer(item.itemId, container.containerId)}
+                                    className="text-muted-foreground"
+                                    onClick={() => {}}
                                   >
-                                    {container.name}
+                                    Create new container
                                   </UI.DropdownMenuItem>
-                                ))}
-                                <UI.DropdownMenuSeparator />
-                                <UI.DropdownMenuItem
-                                  className="text-muted-foreground"
-                                  onClick={() => {}}
-                                >
-                                  Create new container
-                                </UI.DropdownMenuItem>
-                              </UI.DropdownMenuSubContent>
-                            </UI.DropdownMenuPortal>
-                          </UI.DropdownMenuSub>
-                        </UI.DropdownMenuGroup>
+                                </UI.DropdownMenuSubContent>
+                              </UI.DropdownMenuPortal>
+                            </UI.DropdownMenuSub>
+                          </UI.DropdownMenuGroup>
 
-                        <UI.DropdownMenuItem
-                          onClick={() => (
-                            setItemToEdit(item), setIsEditDialogOpen(true)
-                          )}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </UI.DropdownMenuItem>
+                          <UI.DropdownMenuItem
+                            onClick={() => (
+                              setItemToEdit(item), setIsEditDialogOpen(true)
+                            )}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </UI.DropdownMenuItem>
 
-                        <UI.DropdownMenuSeparator />
+                          <UI.DropdownMenuSeparator />
 
-                        <UI.DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => (
-                            setDeleteDialogOpen(true),
-                            setItemToDelete(item.itemId)
-                          )}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </UI.DropdownMenuItem>
-                      </UI.DropdownMenuContent>
-                    </UI.DropdownMenu>
+                          <UI.DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => (
+                              setDeleteDialogOpen(true),
+                              setItemToDelete(item.itemId)
+                            )}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </UI.DropdownMenuItem>
+                        </UI.DropdownMenuContent>
+                      </UI.DropdownMenu>
+                    )}
                   </div>
                 ))}
               </div>
@@ -354,99 +373,133 @@ export default function CollectionPage() {
         <UI.ResizablePanel defaultSize={50}>
           <div className="flex flex-col h-full">
             <div className="flex p-4 mb-4 border-b items-center gap-2">
-              <ContainerIcon className="h-5 w-5" />
+              <Package className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Containers</h2>
             </div>
 
             {/* CONTAINERS LIST  */}
             <UI.ScrollArea className="flex-1">
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-4">
                 {containers.map((container: any) => (
                   <div
                     key={container.containerId}
-                    className="bg-white p-4 rounded-md"
+                    className="bg-white p-4 rounded-md shadow-sm hover:shadow transition-shadow"
                   >
-                    <h3 className="font-medium">{container.name}</h3>
-                    <div className="flex flex-col gap-2">
-                      {container.items.map((item: any) => (
-                        <div
-                          key={item.itemId}
-                          className="flex gap-2 items-center"
-                        >
+                    <div className="flex items-center justify-between mb-2 group">
+                      <h3 className="font-medium"><PackageOpen className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {container.name}</h3>
+                      <UI.DropdownMenu>
+                          <UI.DropdownMenuTrigger asChild>
+                            <UI.Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">Container actions</span>
+                            </UI.Button>
+                          </UI.DropdownMenuTrigger>
+                          <UI.DropdownMenuContent align="end">
+                            <UI.DropdownMenuItem>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit container
+                            </UI.DropdownMenuItem>
+                            <UI.DropdownMenuSeparator />
+                            <UI.DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => (setContainerToDelete(container.containerId), setDeleteContainerDialogOpen(true))}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete container
+                            </UI.DropdownMenuItem>
+                          </UI.DropdownMenuContent>
+                        </UI.DropdownMenu>
+                    </div>
+                    
+                    <div className="p-2 border-l-2 border-muted mt-2 space-y-1 rounded-md">
+                      {container.items &&
+                        container.items.map((item: any) => (
                           <div
-                            onClick={() => toggleItemView(item)}
-                            className={` flex-[0_0_90%]
-                          p-3 rounded-md cursor-pointer transition-colors ${
-                            itemToDisplay?.itemId === item.itemId
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-card hover:bg-muted"
-                          }
-                          `}
+                            key={item.itemId}
+                            className={`flex rounded-md gap-2 p-1 items-center ${
+                              itemToDisplay?.itemId === item.itemId
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-card hover:bg-muted " 
+                            }`}
                           >
-                            <h3 className="text-medium">{item.itemName}</h3>
-                            <p
-                              className={`text-sm ${
-                                itemToDisplay?.itemId === item.itemId
-                                  ? "text-primary-foreground/80"
-                                  : "text-muted-foreground"
-                              }`}
+                            <div
+                              onClick={() => toggleItemView(item)}
+                              className={` flex-[0_0_90%]
+                          p-3 rounded-md cursor-pointer transition-colors 
+                          `}
                             >
-                              {item.description}
-                            </p>
-                            <p
-                              className={`text-sm ${
-                                itemToDisplay?.itemId === item.itemId
-                                  ? "text-primary-foreground/80"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              Quantity: {item.quantity}
-                            </p>
+                              <h3 className="text-medium">{item.itemName}</h3>
+                              <p
+                                className={`text-sm ${
+                                  itemToDisplay?.itemId === item.itemId
+                                    ? "text-primary-foreground/80"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {item.description}
+                              </p>
+                              <p
+                                className={`text-sm ${
+                                  itemToDisplay?.itemId === item.itemId
+                                    ? "text-primary-foreground/80"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                Quantity: {item.quantity}
+                              </p>
+                            </div>
+                            
+                            {/* Item Actions */}
+                            {itemToDisplay?.itemId == item.itemId && (
+                            <UI.DropdownMenu>
+                              <UI.DropdownMenuTrigger asChild>
+                                <UI.Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="flex-[0_10%]"
+                                >
+                                  <Settings className="h-24 w-24" />
+                                  <span className="sr-only">Open menu</span>
+                                </UI.Button>
+                              </UI.DropdownMenuTrigger>
+                              <UI.DropdownMenuContent align="end">
+                                <UI.DropdownMenuItem
+                                  onClick={() =>
+                                    handleRemoveItemFromContainer(item.itemId)
+                                  }
+                                >
+                                  Remove from container
+                                </UI.DropdownMenuItem>
+
+                                <UI.DropdownMenuItem
+                                  onClick={() => (
+                                    setItemToEdit(item),
+                                    setIsEditDialogOpen(true)
+                                  )}
+                                >
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </UI.DropdownMenuItem>
+
+                                <UI.DropdownMenuSeparator />
+
+                                <UI.DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => (
+                                    setDeleteDialogOpen(true),
+                                    setItemToDelete(item.itemId)
+                                  )}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </UI.DropdownMenuItem>
+                              </UI.DropdownMenuContent>
+                            </UI.DropdownMenu>
+                            )}
                           </div>
-
-                          {/* Item Actions */}
-                          <UI.DropdownMenu>
-                            <UI.DropdownMenuTrigger asChild>
-                              <UI.Button
-                                variant="ghost"
-                                size="icon"
-                                className="flex-[0_10%]"
-                              >
-                                <MoreVertical className="h-24 w-24" />
-                                <span className="sr-only">Open menu</span>
-                              </UI.Button>
-                            </UI.DropdownMenuTrigger>
-                            <UI.DropdownMenuContent align="end">
-
-                              <UI.DropdownMenuItem onClick={() => handleRemoveItemFromContainer(item.itemId)}>
-                                Remove from container
-                              </UI.DropdownMenuItem>
-
-                              <UI.DropdownMenuItem
-                                onClick={() => (
-                                  setItemToEdit(item), setIsEditDialogOpen(true)
-                                )}
-                              >
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </UI.DropdownMenuItem>
-
-                              <UI.DropdownMenuSeparator />
-
-                              <UI.DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => (
-                                  setDeleteDialogOpen(true),
-                                  setItemToDelete(item.itemId)
-                                )}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </UI.DropdownMenuItem>
-                            </UI.DropdownMenuContent>
-                          </UI.DropdownMenu>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 ))}
@@ -501,6 +554,36 @@ export default function CollectionPage() {
           </UI.AlertDialogContent>
         )}
       </UI.AlertDialog>
+
+      {/* Delete Container Dialog */}
+      <UI.AlertDialog
+        open={deleteContainerDialogOpen}
+        onOpenChange={setDeleteContainerDialogOpen}
+      >
+        {containerToDelete && (
+          <UI.AlertDialogContent>
+            <UI.AlertDialogHeader>
+              <UI.AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                Delete Container
+              </UI.AlertDialogTitle>
+              <UI.AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                container from the collection.
+              </UI.AlertDialogDescription>
+            </UI.AlertDialogHeader>
+            <UI.AlertDialogFooter>
+              <UI.AlertDialogCancel>Cancel</UI.AlertDialogCancel>
+              <UI.AlertDialogAction
+                onClick={async () => await handleDeleteContainer(containerToDelete)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </UI.AlertDialogAction>
+            </UI.AlertDialogFooter>
+          </UI.AlertDialogContent>
+        )}
+        </UI.AlertDialog>
     </div>
   );
 }
