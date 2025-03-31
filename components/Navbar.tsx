@@ -1,20 +1,12 @@
-import { auth, signOut, signIn } from '@/auth';
+'use client';
+import { signIn, signOut, useSession } from "next-auth/react"
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from "next/image"
+import getUserId from "@/app/(root)/_actions/getUserId";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { PlusCircle, ImagePlus, X, Keyboard} from "lucide-react"
+import defaultUserImage from '../public/default-user-image.png';
+import { Keyboard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,16 +16,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from './ui/button';
-import { revalidatePath } from 'next/cache';
+import BackButton from './BackButton';
 
-import { addCollection } from "../app/(root)/_actions/addCollection";
-import { signOutAction } from '@/app/(root)/_actions/signOut';
-import CreateCollectionDialog from './CreateCollectionDialog';
+const Navbar = () => {
+  const { data: session } = useSession()
+  const [userId, setUserId] = React.useState('');
 
-const Navbar = async () => {
-  const session = await auth();
+  useEffect(() => {
+      getUserId().then(data => {
+        if (data) {
+          setUserId(data);
+        }
+      });
+    }, [])
 
-  let dialogKey = Date.now();  
 
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
@@ -41,33 +37,14 @@ const Navbar = async () => {
       <div className='text-center ml-5 flex items-center gap-2'>
         <Keyboard />
         keebit
+        
+        <BackButton />
+        
       </div>
+
 
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
-          <Dialog 
-          key={dialogKey} 
-          >
-            <div className=''>
-              <DialogTrigger asChild >
-                <Button >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Collection
-                </Button>
-              </DialogTrigger>
-            </div>
-            
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add collection</DialogTitle>
-                <DialogDescription>
-                  Create your collection here. Click submit when you're done.
-                </DialogDescription>
-              </DialogHeader>
-
-              <CreateCollectionDialog type={"add"}/>
-            </DialogContent>
-          </Dialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -77,33 +54,41 @@ const Navbar = async () => {
             <DropdownMenuContent>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/profile/${userId}`}>Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href='/'>Collections</Link>
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <form
-                  action={async ()=> {
-                    "use server";
-                    await signOut();
-                    revalidatePath("/"); 
-                  }}
-                >
-                  <button type='submit'>Logout</button>
-                </form>
+              <DropdownMenuItem asChild>
+                
+                <button onClick={() => signOut()} className='w-full text-left'>Logout</button>
+                
               </DropdownMenuItem>
             </DropdownMenuContent>
 
           </DropdownMenu>
 
+          { (session?.user.image ?? '').length > 0 ? (
+            
           <Image
-              src={session?.user.image ?? '/default-profile.png'}
+              src={session?.user.image ?? ''}
               alt={`Profile Picture of ${session.user.name}`}
               width={42}
               height={42}
               className="rounded-full"
           />
+          ) : (
+              <Image src={defaultUserImage}
+              alt={`Profile Picture of ${session.user.name}`}
+              width={42}
+              height={42}
+              className="rounded-full"
+              />
+          )}
+
         </div>
 
       ) : (

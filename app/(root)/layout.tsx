@@ -1,9 +1,10 @@
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 
-export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+
     return(
         <main>
-            <Navbar />
+            <NavbarWrapper />
             {children}
         </main>
     )

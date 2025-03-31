@@ -42,16 +42,12 @@ export async function GET(req: NextRequest, {
                     )
                     FROM "items" i
                     JOIN "item_types" it ON i."typeId" = it."id"
-                    WHERE i."containerId" = co."id" AND i."collectionId" = c."id"
+                    WHERE i."containerId" = co."id"
                 )
             )
         )
         FROM "containers" co
-        WHERE co."id" IN (
-            SELECT DISTINCT "containerId"
-            FROM "items"
-            WHERE "collectionId" = c."id"
-        )
+        WHERE co."collectionId" = c."id"
     ),
     'itemsWithoutContainers', (
     SELECT json_agg(

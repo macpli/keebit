@@ -5,12 +5,14 @@ import { useEffect, useState, useRef } from "react";
 
 import { PatternPlaceholder } from "./PatternPlaceholder"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,Separator, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DialogTrigger, Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/index"
-import { FolderIcon, AlertCircle, PlusCircle, Trash2, Pencil, MoreVertical } from "lucide-react"
+import { Share, FolderIcon, AlertCircle, PlusCircle, Trash2, Pencil, MoreVertical } from "lucide-react"
 
 import { Collection } from "@/types/collection"
 import { deleteCollection } from "@/app/(root)/_actions/deleteCollection";
 import CreateCollectionDialog from "./CreateCollectionDialog";
 import { getItemsCountAction } from "@/app/(root)/_actions/getItemsCountAction";
+import { publishCollection } from "@/app/(root)/_actions/publishCollection";
+import { set } from "react-hook-form";
 
 function base64ToImage(base64: string): string {
   return `data:image/png;base64,${base64}`;
@@ -20,7 +22,7 @@ function base64ToImage(base64: string): string {
 export function CollectionCard({collection}: {collection: Collection}) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null)
-
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [collectionToEdit, setCollectionToEdit] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState({
@@ -42,6 +44,15 @@ export function CollectionCard({collection}: {collection: Collection}) {
   const handleSubmitEdit = async () => {
     setEditDialogOpen(false);
   }
+
+  const openPublishDialog = async () => {
+    setPublishDialogOpen(true);
+  }
+
+  const handlePublicCollection = async (collectionId: string) => {
+    await publishCollection(collectionId);
+    setPublishDialogOpen(false);
+  }  
   
   const handleDeleteCollection = async (collectionId: string) => {
     setCollectionToDelete(collectionId);
@@ -96,6 +107,11 @@ export function CollectionCard({collection}: {collection: Collection}) {
               <DropdownMenuItem onClick={() => handleEditCollection(collection.id)}>
                 <Pencil className="mr-2 h-4 w-4" />
                   Edit
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={openPublishDialog}>
+                <Share className="mr-2 h-4 w-4" />
+                  Publish
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
@@ -195,6 +211,28 @@ export function CollectionCard({collection}: {collection: Collection}) {
             <DialogDescription>Make changes to your collection here. Click save when you're done.</DialogDescription>
           </DialogHeader>
           <CreateCollectionDialog collection={collection} type={"edit"} collectionId={collection.id} onClose={handleSubmitEdit}/>
+        </DialogContent>
+      </Dialog>
+
+      {/* Publish Collection Dialog */}
+      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share className="h-5 w-5" />
+              Publish Collection
+            </DialogTitle>
+            <DialogDescription>
+              Publish your collection here. Click publish if you're sure.
+            </DialogDescription>
+          </DialogHeader>
+            <Button
+              onClick={async () => await handlePublicCollection(collection.id)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Publish
+            </Button>
+          
         </DialogContent>
       </Dialog>
     </div>
