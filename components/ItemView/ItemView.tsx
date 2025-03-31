@@ -1,15 +1,19 @@
 'use client';
 import React, { use, useState, useEffect } from 'react'
 import { Item } from '@/types/item'
-import { ChevronDown, ChevronUp, CuboidIcon as Cube } from "lucide-react"
+import { ChevronDown, ChevronUp, CuboidIcon as Cube, Image, Rotate3d } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+
 import ModelViewer from "@/components/ModelViewer/ModelViewer"
 
 const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+    const [showModel, setShowModel] = useState(true);
 
     useEffect(() => {
         const handleItemSelection = () => {
@@ -18,6 +22,10 @@ const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
 
         handleItemSelection();
     }, [item]);
+
+    const handleToggleItemVIew = () => {
+        setShowModel(!showModel);
+    }
 
     return (
     
@@ -39,11 +47,26 @@ const ItemView: React.FC<{ item: Item | undefined}> = ({ item }) => {
             <CollapsibleContent>
               <div className="p-4">
                 {item ? (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="border rounded-lg h-[300px]">
-                      {/* TODO: IMPLEMENT THREEJS 3D MODELS */}
-                      <ModelViewer />
+                  // Model Viewer
+                  <div className="grid grid-cols-[2fr_1fr] gap-4">
+                    <div className="border rounded-lg h-[400px]">
+                        <div className='flex absolute z-10 p-1 items-center space-x-2'>
+                            <Image />
+                            <Switch onClick={handleToggleItemVIew} checked={showModel} onChange={handleToggleItemVIew} />
+                            <Rotate3d />
+                        </div>
+
+                        {showModel ? (
+                            <ModelViewer item={item}/>
+                        ) : (
+                            <div className='flex items-center justify-center h-full'>
+
+                                <p>3D Model Hidden</p>
+                            </div>
+                        )} 
                     </div>
+                    
+                    {/* Item Details */}
                     <div className="border rounded-lg p-4">
                       <h3 className="font-medium font-semibold mb-2">{item.itemName}</h3>
                       <p>{item.description}</p>
