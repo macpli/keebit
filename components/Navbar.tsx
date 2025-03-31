@@ -7,6 +7,7 @@ import getUserId from "@/app/(root)/_actions/getUserId";
 
 import defaultUserImage from '../public/default-user-image.png';
 import { Keyboard } from "lucide-react"
+import Sparkles from '@/public/Sparkles.svg'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,13 @@ const Navbar = () => {
 
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
+
+          <Button variant="outline" size="sm" asChild className="mr-2">
+            <Link href="/toolbox" className="flex items-center gap-1">
+              <Image src={Sparkles} alt="AI Detection sparkles" width={24} height={24} />
+              AI Features
+            </Link>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

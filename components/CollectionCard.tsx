@@ -137,9 +137,9 @@ export function CollectionCard({collection}: {collection: Collection}) {
                       <Image
                       src={imageUrl}
                       alt={`${collection.name} preview`}
-                      width={150}
+                      width={350}
                       height={150}
-                      className="object-contain"
+                      className="object-contain rounded-md"
                   />
                     )}
             </div>
