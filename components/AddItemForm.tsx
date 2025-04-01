@@ -68,6 +68,7 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
     try {
       if (selectedType === "item") {
         await addItem(data, collectionId);
+        // console.log(data)
       } else if (selectedType === "container") {
         await addContainer(data.name, data.description, collectionId);
       } else if (selectedType === "createItemType") {
