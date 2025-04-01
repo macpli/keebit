@@ -35,6 +35,7 @@ const CreateCollectionDialog = ({
   const [image, setImage] = useState<string | null>(
     collection?.image ? `data:image/png;base64,${collection.image}` : null
   );
+
   const [base64image, setBase64Image] = useState<string | null>(
     collection?.image || null
   );
@@ -59,14 +60,14 @@ const CreateCollectionDialog = ({
       );
       setBase64Image(strippedBase64String);
       setImage(base64String);
-      form.setValue("imageBase64", strippedBase64String); 
+      form.setValue("imageBase64", strippedBase64String);
     }
   };
 
   const removeImage = () => {
     setImage(null);
     setBase64Image(null);
-    form.setValue("imageBase64", ""); 
+    form.setValue("imageBase64", "");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -102,7 +103,9 @@ const CreateCollectionDialog = ({
             name="name"
             className="col-span-3"
           />
-          <p className="text-sm text-red-500">{form.formState.errors.name?.message}</p>
+          <p className="text-sm text-red-500">
+            {form.formState.errors.name?.message}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="description" className="text-right">

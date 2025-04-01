@@ -18,8 +18,8 @@ export async function editItem(item: Item, itemId: string) {
 
     try {
         const { rows } = await pool.query(
-            `UPDATE items SET name = $1, "typeId" = $2,description = $3, quantity = $4 WHERE id = $5 RETURNING *`,
-            [item.itemName, itemTypeId, item.description, item.quantity, itemId]
+            `UPDATE items SET name = $1, "typeId" = $2,description = $3, quantity = $4, image = $5 WHERE id = $6 RETURNING *`,
+            [item.itemName, itemTypeId, item.description, item.quantity, item.image, itemId]
           );
     
         return rows[0]; 
