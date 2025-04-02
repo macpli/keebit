@@ -4,6 +4,12 @@ import { auth } from "@/auth";
 
 export async function getColors(itemId: string) {
     const session = await auth();
+
+    if (!session || !session.user || !session.user.id) {
+      throw new Error("User not authenticated");
+
+    }
+
     
   try {
     const { rows } = await pool.query(

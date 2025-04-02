@@ -11,6 +11,7 @@ import { editItem } from "@/app/(root)/_actions/editItem";
 import { encodeImageToBase64 } from "@/lib/encodeImageToBase64";
 
 import { ImagePlus, X } from "lucide-react";  
+import getDefaultItemTypes from "@/app/(root)/_actions/getDefaultItemTypes";
 
 export default function EditItemForm({ item, onSucces }: { item: Item; onSucces: () => void;}) {
   const [customTypes, setCustomTypes] = useState<string[]>([]);
@@ -54,10 +55,12 @@ export default function EditItemForm({ item, onSucces }: { item: Item; onSucces:
       image: data.imageBase64,
     };
 
-    console.log(data)
-    console.log(newItem.image);
+    console.log(item.itemType)
+    const defaultTypes = await getDefaultItemTypes(); 
+    
+    const isDefault = defaultTypes.some((type) => type.name === item?.itemType)
 
-    await editItem(newItem, item.itemId);
+    await editItem(newItem, item.itemId, isDefault);
     onSucces();
   };
 

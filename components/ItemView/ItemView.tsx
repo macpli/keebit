@@ -22,10 +22,13 @@ import { Label } from "@/components/ui/label";
 import ModelViewer from "@/components/ModelViewer/ModelViewer";
 import { base64ToImage } from "@/lib/base64ToImage";
 
+import getDefaultItemTypes from "@/app/(root)/_actions/getDefaultItemTypes" 
+
 const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [showModel, setShowModel] = useState(true);
+  const [isDefaultType, setIsDefaultType] = useState(false);
 
   const imageUrl = item?.image ? base64ToImage(item.image) : "";
 
@@ -34,9 +37,14 @@ const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
       if (item !== undefined) setIsOpen(true);
     };
 
-    console.log("ItemView", item);
+    const checkIfDefaultType = async () => {
+      const defaultTypes = await getDefaultItemTypes(); 
+
+      setIsDefaultType(defaultTypes.some((type) => type.name === item?.itemType));
+    }
 
     handleItemSelection();
+    checkIfDefaultType();
   }, [item]);
 
   const handleToggleItemVIew = () => {
@@ -84,11 +92,11 @@ const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
                     <Rotate3d />
                   </div>
 
-                  {showModel ? (
+                  {showModel && isDefaultType ? (
                     <ModelViewer item={item} />
                   ) : (
                     <div className="flex items-center justify-center h-full">
-                      {imageUrl === "data:image/png;base64,null" ? (
+                      {imageUrl.length == 0 ? (
                         <p>3D Model Hidden</p>
                       ) : (
                         <Image

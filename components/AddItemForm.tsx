@@ -27,14 +27,15 @@ import {
 import addItemType from "@/app/(root)/_actions/addItemType"
 import getItemTypes from "@/app/(root)/_actions/getItemTypes"
 import addContainer from "@/app/(root)/_actions/addContainer"
+import getDefaultItemTypes from "@/app/(root)/_actions/getDefaultItemTypes"
+import { ItemType } from "@/types/itemType"
 
 export default function AddItemForm({ collectionId, onSuccess }: { collectionId: string; onSuccess: () => void; }) {
   const [customTypes, setCustomTypes] = useState<string[]>([]);
-  const baseItemTypes = ["keyboard", "switch"] as const;
-
+  const [defaultItemTypes, setDefaultItemTypes] = useState<ItemType[]>([]);
   const formSchema = z.object({
     type: z.enum(["item", "container", "createItemType"]),
-    itemType: z.union([z.enum(baseItemTypes), z.string()]).optional(), // Allow dynamic values
+    itemType: z.union([z.enum((defaultItemTypes.length > 0 ? defaultItemTypes.map((type) => type.name) : ["placeholder"]) as [string, ...string[]]), z.string()]).optional(),
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),
     description: z.string().min(10, { message: "Description must be at least 10 characters." }),
     quantity: z.number().min(1, { message: "Quantity must be at least 1." }).optional(),
@@ -54,21 +55,30 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
   useEffect(() => {
     async function fetchItemTypes() {
       const response = await getItemTypes();
-
+      const defaultTypes = await getDefaultItemTypes();
   
       if (response.length > 0) {
         setCustomTypes(response);
       }
+
+      if (defaultTypes.length > 0) {
+        setDefaultItemTypes(defaultTypes);
+      }
+
     }
   
+
     fetchItemTypes();
   }, []);
 
   const onSubmit = async (data: any) => {
     try {
       if (selectedType === "item") {
-        await addItem(data, collectionId);
-        // console.log(data)
+
+        let isDefaultType = false;
+        isDefaultType = defaultItemTypes.some((type) => type.name === data.itemType);
+        
+        await addItem(data, collectionId, isDefaultType);
       } else if (selectedType === "container") {
         await addContainer(data.name, data.description, collectionId);
       } else if (selectedType === "createItemType") {
@@ -128,8 +138,12 @@ export default function AddItemForm({ collectionId, onSuccess }: { collectionId:
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="keyboard">Keyboard</SelectItem>
-                  <SelectItem value="switch">Switch</SelectItem>
+                  {defaultItemTypes.map((type: any, idx) => (
+                    <SelectItem key={idx} value={type.name}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+
                   {customTypes.map((type: any, idx) => (
                     <SelectItem key={idx} value={type.name}>
                       {type.name}

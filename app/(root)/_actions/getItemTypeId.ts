@@ -3,17 +3,30 @@
 import { auth } from "@/auth";
 import { pool } from "@/lib/db";
 
-export default async function getItemTypeId(itemTypeName: string) {
+export default async function getItemTypeId(itemTypeName: string, isDefault: boolean) {
     const session = await auth();
 
     if (session == null || session.user == null || session.user.id == null) {
         throw new Error("Unauthorized");
     }
 
-    const { rows } = await pool.query(
-        `SELECT id FROM item_types WHERE name = $1 AND "userId" = $2`,
-        [itemTypeName, session.user.id]
-    );
+    var userId: string | null = session.user.id;
 
-  return rows[0];
+    if(isDefault){
+        const { rows } = await pool.query(
+            `SELECT id FROM item_types WHERE name = $1 AND is_default = true`,
+            [itemTypeName]
+        );
+
+        return rows[0];
+    } else {
+        
+        const { rows } = await pool.query(
+            `SELECT id FROM item_types WHERE name = $1 AND "userId" = $2`,
+            [itemTypeName, userId]
+        );
+        
+        return rows[0];
+    }
+
 }

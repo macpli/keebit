@@ -48,11 +48,11 @@ const CameraUpdater = ({ config }: { config: CameraConfig }) => {
         config.position[2]
       );
       camera.zoom = config.zoom;
-      camera.updateProjectionMatrix(); // Important for zoom updates
+      camera.updateProjectionMatrix(); 
     }
   }, [config, camera]);
 
-  return null; // This component doesn't render anything
+  return null; 
 };
 
 const ModelViewer: React.FC<{ item: Item }> = ({ item }) => {
@@ -155,9 +155,56 @@ const ModelViewer: React.FC<{ item: Item }> = ({ item }) => {
 
   // Sets the color on the model and triggers the handleAddColor to add / update to database
   const setModelColor = async () => {
-    colorsToSave.forEach((color) => {
-      handleAddColor(color);
-    });
+    if(colorsToSave.length !== colors.length){
+      const colorsToSaveMap = new Map(
+        colors.map((color) => [color.material_index, color])
+      );
+
+      const fullColorsToSave = colors.map((defaultColor)=> {
+        return(
+          colorsToSaveMap.get(defaultColor.material_index) || {
+            item_id: item.itemId,
+            model_name: item.itemType,
+            r: defaultColor.r,
+            g: defaultColor.g,
+            b: defaultColor.b,
+            material_index: defaultColor.material_index
+          }
+        );
+      });
+
+      setColorsToSave(
+        fullColorsToSave.map((color) =>
+          "item_id" in color
+            ? color
+            : {
+                item_id: item.itemId,
+                model_name: item.itemType,
+                r: color.r,
+                g: color.g,
+                b: color.b,
+                material_index: color.material_index,
+              }
+        )
+      );
+
+      fullColorsToSave.forEach((color) => {
+        handleAddColor({
+          item_id: item.itemId,
+          model_name: item.itemType,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+          material_index: color.material_index,
+        });
+      });
+    } else {
+      
+      colorsToSave.forEach((color) => {
+        handleAddColor(color);
+      });
+    }
+
   };
 
   const handleAddColor = async (colorData: ColorDTO) => {

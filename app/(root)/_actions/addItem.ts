@@ -11,9 +11,9 @@ interface Item {
     itemType: string;
 }
 
-export default async function addItem(item: Item, collectionId: string) {
-    const itemTypeId = await getItemTypeId(item.itemType);
-    console.log('ITEM TYPE ID: ' + itemTypeId.id)
+export default async function addItem(item: Item, collectionId: string, isDefault: boolean) {
+
+    const itemTypeId = await getItemTypeId(item.itemType, isDefault);
     try {
         const { rows } = await pool.query(
             `INSERT INTO items ("collectionId", "typeId", name, description, quantity) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
