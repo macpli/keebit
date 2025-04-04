@@ -38,7 +38,8 @@ export async function GET(req: NextRequest, {
                             'quantity', i."quantity",
                             'attributes', i."attributes",
                             'itemType', it."name",
-                            'image', i."image"
+                            'image', i."image",
+                            'additionalData', i."additional_data"
                         )
                     )
                     FROM "items" i
@@ -59,7 +60,8 @@ export async function GET(req: NextRequest, {
             'quantity', i."quantity",
             'attributes', i."attributes",
             'itemType', it."name",
-            'image', i."image"
+            'image', i."image",
+            'additionalData', i."additional_data"
 
         )
     )

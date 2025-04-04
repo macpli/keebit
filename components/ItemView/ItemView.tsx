@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import ModelViewer from "@/components/ModelViewer/ModelViewer";
 import { base64ToImage } from "@/lib/base64ToImage";
 
-import getDefaultItemTypes from "@/app/(root)/_actions/getDefaultItemTypes" 
+import getDefaultItemTypes from "@/app/(root)/_actions/getDefaultItemTypes";
 
 const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,11 +38,14 @@ const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
     };
 
     const checkIfDefaultType = async () => {
-      const defaultTypes = await getDefaultItemTypes(); 
+      const defaultTypes = await getDefaultItemTypes();
 
-      setIsDefaultType(defaultTypes.some((type) => type.name === item?.itemType));
-    }
+      setIsDefaultType(
+        defaultTypes.some((type) => type.name === item?.itemType)
+      );
+    };
 
+    console.log(item);
     handleItemSelection();
     checkIfDefaultType();
   }, [item]);
@@ -117,14 +120,22 @@ const ItemView: React.FC<{ item: Item | undefined }> = ({ item }) => {
                     {item.itemName}
                   </h3>
                   <p>{item.description}</p>
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Additional Data</h4>
-                    <ul className="list-disc pl-5">
-                      <li>Property 1: Value 1</li>
-                      <li>Property 2: Value 2</li>
-                      <li>Property 3: Value 3</li>
-                    </ul>
-                  </div>
+                  
+                  {item.additionalData && (
+
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Additional Data</h4>
+                      <ul>
+                        {Object.entries(item.additionalData).map(
+                          ([key, value]) => (
+                            <li key={key}>
+                              <strong>{key}:</strong> {String(value)}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

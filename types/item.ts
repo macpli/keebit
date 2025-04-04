@@ -6,4 +6,5 @@ export type Item = {
     attributes: any;
     itemType: string;
     image: string | null;
+    additionalData?: any;
   };

@@ -48,6 +48,7 @@ const CameraUpdater = ({ config }: { config: CameraConfig }) => {
         config.position[2]
       );
       camera.zoom = config.zoom;
+      // camera.fov = 50;
       camera.updateProjectionMatrix(); 
     }
   }, [config, camera]);

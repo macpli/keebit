@@ -9,6 +9,7 @@ interface Item {
     description: string;
     quantity: number;
     itemType: string;
+    additionalData: any;
 }
 
 export default async function addItem(item: Item, collectionId: string, isDefault: boolean) {
@@ -16,11 +17,11 @@ export default async function addItem(item: Item, collectionId: string, isDefaul
     const itemTypeId = await getItemTypeId(item.itemType, isDefault);
     try {
         const { rows } = await pool.query(
-            `INSERT INTO items ("collectionId", "typeId", name, description, quantity) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [collectionId, itemTypeId.id, item.name, item.description, item.quantity]
+            `INSERT INTO items ("collectionId", "typeId", name, description, quantity, additional_data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [collectionId, itemTypeId.id, item.name, item.description, item.quantity, item.additionalData]
         );        
         
-        return rows[0]; // Zwracamy nowo dodany obiekt
+        return rows[0]; 
     } catch (error) {
         console.error("Error adding item:", error);
         throw error;
