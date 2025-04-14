@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, {
   
   try {
     const { rows: collections } = await pool.query(
-      `SELECT * FROM collections WHERE "userId" = $1`,  
+      `SELECT id, name, description, "userId", is_public AS "isPublic", "createdAt", "updatedAt", image FROM collections WHERE "userId" = $1`,  
       [userId]
     );
 
