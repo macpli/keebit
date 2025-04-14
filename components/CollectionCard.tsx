@@ -12,12 +12,7 @@ import { deleteCollection } from "@/app/(root)/_actions/deleteCollection";
 import CreateCollectionDialog from "./CreateCollectionDialog";
 import { getItemsCountAction } from "@/app/(root)/_actions/getItemsCountAction";
 import { publishCollection } from "@/app/(root)/_actions/publishCollection";
-import { set } from "react-hook-form";
-
-function base64ToImage(base64: string): string {
-  return `data:image/png;base64,${base64}`;
-}
-
+import { base64ToImage } from "@/lib/base64ToImage";
 
 export function CollectionCard({collection}: {collection: Collection}) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

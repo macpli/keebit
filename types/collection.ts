@@ -6,4 +6,5 @@ export type Collection = {
     createdAt: string;
     updatedAt: string;
     image: string;
+    isPublic: boolean;
   };

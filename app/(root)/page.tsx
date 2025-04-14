@@ -59,7 +59,7 @@ export default async function UsersPage() {
 
   return (
 
-    <div className="container mx-auto p-4  grid md:grid-cols-[240px_1fr] gap-10">
+    <div className="container mx-auto p-4  grid md:grid-cols-[150px_0.9fr] gap-10">
 
       <aside>
       <div className="sticky top-20 space-y-6">
