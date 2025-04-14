@@ -20,24 +20,16 @@ import { Button } from './ui/button';
 import BackButton from './BackButton';
 
 const Navbar = () => {
-  const { data: session } = useSession()
-  const [userId, setUserId] = React.useState('');
-
-  useEffect(() => {
-      getUserId().then(data => {
-        if (data) {
-          setUserId(data);
-        }
-      });
-    }, [])
-
+  const { data: session } = useSession();
 
   return (
     <div className='px-5 py-3  bg-white shadow-sm font-work-sans  text-black flex items-center  justify-between'>
       
-      <div className='text-center ml-5 flex items-center gap-2'>
+      <div className='text-center ml-5 flex items-center gap-2 semibold'>
         <Keyboard />
-        keebit
+        <span className="font-bold font-work-sans text-xl">
+          keebit
+        </span>
         
         <BackButton />
         
@@ -63,7 +55,7 @@ const Navbar = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href={`/profile/${userId}`}>Profile</Link>
+                <Link href={`/profile/${session.user.id}`}>Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href='/'>Collections</Link>

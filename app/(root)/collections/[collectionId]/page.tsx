@@ -20,7 +20,7 @@ import {
   AlertCircle,
   ArchiveRestore,
   PackageOpen,
-  Package
+  Package,
 } from "lucide-react";
 
 import AddItemForm from "@/components/AddItemForm";
@@ -50,8 +50,11 @@ export default function CollectionPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const [deleteContainerDialogOpen, setDeleteContainerDialogOpen] = useState(false);
-  const [containerToDelete, setContainerToDelete] = useState<string | null>(null);
+  const [deleteContainerDialogOpen, setDeleteContainerDialogOpen] =
+    useState(false);
+  const [containerToDelete, setContainerToDelete] = useState<string | null>(
+    null
+  );
 
   const [showActions, setShowActions] = useState<string | null>(null);
 
@@ -155,7 +158,7 @@ export default function CollectionPage() {
   const handleDeleteContainer = async (containerId: string) => {
     await deleteContainer(containerId);
     fetchData();
-  }
+  };
 
   if (!params.collectionId) {
     return <div>Collection not found</div>;
@@ -252,7 +255,7 @@ export default function CollectionPage() {
             </div>
 
             {/* ITEMS LIST  */}
-            <UI.ScrollArea className="flex-1 h-75">
+            <UI.ScrollArea className="flex-1 max-h-[800px] overflow-auto">
               <div className="p-4 space-y-2">
                 {itemsWithoutContainers.map((item: Item) => (
                   <div
@@ -378,7 +381,7 @@ export default function CollectionPage() {
             </div>
 
             {/* CONTAINERS LIST  */}
-            <UI.ScrollArea className="flex-1">
+            <UI.ScrollArea className="flex-1 max-h-[800px] overflow-auto">
               <div className="p-4 space-y-4">
                 {containers.map((container: any) => (
                   <div
@@ -386,33 +389,41 @@ export default function CollectionPage() {
                     className="bg-white p-4 rounded-md shadow-sm hover:shadow transition-shadow"
                   >
                     <div className="flex items-center justify-between mb-2 group">
-                      <h3 className="font-medium"><PackageOpen className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {container.name}</h3>
+                      <h3 className="font-medium">
+                        <PackageOpen className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {container.name}
+                      </h3>
                       <UI.DropdownMenu>
-                          <UI.DropdownMenuTrigger asChild>
-                            <UI.Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">Container actions</span>
-                            </UI.Button>
-                          </UI.DropdownMenuTrigger>
-                          <UI.DropdownMenuContent align="end">
-                            <UI.DropdownMenuItem>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit container
-                            </UI.DropdownMenuItem>
-                            <UI.DropdownMenuSeparator />
-                            <UI.DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => (setContainerToDelete(container.containerId), setDeleteContainerDialogOpen(true))}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete container
-                            </UI.DropdownMenuItem>
-                          </UI.DropdownMenuContent>
-                        </UI.DropdownMenu>
+                        <UI.DropdownMenuTrigger asChild>
+                          <UI.Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Container actions</span>
+                          </UI.Button>
+                        </UI.DropdownMenuTrigger>
+                        <UI.DropdownMenuContent align="end">
+                          <UI.DropdownMenuItem>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit container
+                          </UI.DropdownMenuItem>
+                          <UI.DropdownMenuSeparator />
+                          <UI.DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => (
+                              setContainerToDelete(container.containerId),
+                              setDeleteContainerDialogOpen(true)
+                            )}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete container
+                          </UI.DropdownMenuItem>
+                        </UI.DropdownMenuContent>
+                      </UI.DropdownMenu>
                     </div>
-                    
+
                     <div className="p-2 border-l-2 border-muted mt-2 space-y-1 rounded-md">
                       {container.items &&
                         container.items.map((item: any) => (
@@ -421,7 +432,7 @@ export default function CollectionPage() {
                             className={`flex rounded-md gap-2 p-1 items-center ${
                               itemToDisplay?.itemId === item.itemId
                                 ? "bg-primary text-primary-foreground"
-                                : "bg-card hover:bg-muted " 
+                                : "bg-card hover:bg-muted "
                             }`}
                           >
                             <div
@@ -450,53 +461,53 @@ export default function CollectionPage() {
                                 Quantity: {item.quantity}
                               </p>
                             </div>
-                            
+
                             {/* Item Actions */}
                             {itemToDisplay?.itemId == item.itemId && (
-                            <UI.DropdownMenu>
-                              <UI.DropdownMenuTrigger asChild>
-                                <UI.Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="flex-[0_10%]"
-                                >
-                                  <Settings className="h-24 w-24" />
-                                  <span className="sr-only">Open menu</span>
-                                </UI.Button>
-                              </UI.DropdownMenuTrigger>
-                              <UI.DropdownMenuContent align="end">
-                                <UI.DropdownMenuItem
-                                  onClick={() =>
-                                    handleRemoveItemFromContainer(item.itemId)
-                                  }
-                                >
-                                  Remove from container
-                                </UI.DropdownMenuItem>
+                              <UI.DropdownMenu>
+                                <UI.DropdownMenuTrigger asChild>
+                                  <UI.Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="flex-[0_10%]"
+                                  >
+                                    <Settings className="h-24 w-24" />
+                                    <span className="sr-only">Open menu</span>
+                                  </UI.Button>
+                                </UI.DropdownMenuTrigger>
+                                <UI.DropdownMenuContent align="end">
+                                  <UI.DropdownMenuItem
+                                    onClick={() =>
+                                      handleRemoveItemFromContainer(item.itemId)
+                                    }
+                                  >
+                                    Remove from container
+                                  </UI.DropdownMenuItem>
 
-                                <UI.DropdownMenuItem
-                                  onClick={() => (
-                                    setItemToEdit(item),
-                                    setIsEditDialogOpen(true)
-                                  )}
-                                >
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </UI.DropdownMenuItem>
+                                  <UI.DropdownMenuItem
+                                    onClick={() => (
+                                      setItemToEdit(item),
+                                      setIsEditDialogOpen(true)
+                                    )}
+                                  >
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </UI.DropdownMenuItem>
 
-                                <UI.DropdownMenuSeparator />
+                                  <UI.DropdownMenuSeparator />
 
-                                <UI.DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => (
-                                    setDeleteDialogOpen(true),
-                                    setItemToDelete(item.itemId)
-                                  )}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </UI.DropdownMenuItem>
-                              </UI.DropdownMenuContent>
-                            </UI.DropdownMenu>
+                                  <UI.DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => (
+                                      setDeleteDialogOpen(true),
+                                      setItemToDelete(item.itemId)
+                                    )}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </UI.DropdownMenuItem>
+                                </UI.DropdownMenuContent>
+                              </UI.DropdownMenu>
                             )}
                           </div>
                         ))}
@@ -575,7 +586,9 @@ export default function CollectionPage() {
             <UI.AlertDialogFooter>
               <UI.AlertDialogCancel>Cancel</UI.AlertDialogCancel>
               <UI.AlertDialogAction
-                onClick={async () => await handleDeleteContainer(containerToDelete)}
+                onClick={async () =>
+                  await handleDeleteContainer(containerToDelete)
+                }
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
@@ -583,7 +596,7 @@ export default function CollectionPage() {
             </UI.AlertDialogFooter>
           </UI.AlertDialogContent>
         )}
-        </UI.AlertDialog>
+      </UI.AlertDialog>
     </div>
   );
 }

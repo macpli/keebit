@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 
 export async function getItemsCountAction(collectionId: string) {
 
-  const session = await auth()
-  if (!session || !session.user || !session.user.id) {
-    console.error("Failed to create collection");
-    return;
-  }
+  // const session = await auth()
+  // if (!session || !session.user || !session.user.id) {
+  //   console.error("Failed to create collection");
+  //   return;
+  // }
 
   try {
     const { rows } = await pool.query(
@@ -17,7 +17,7 @@ export async function getItemsCountAction(collectionId: string) {
       [ collectionId]
     );
 
-    revalidatePath("/");
+    // revalidatePath("/");
     return rows[0]; 
   } catch (error) {
     console.error("Error adding collection:", error);
