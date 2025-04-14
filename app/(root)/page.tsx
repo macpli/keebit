@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
 import Link from "next/link";
+import Image from "next/image";
 
 import { Collection } from "../../types/collection";
 
@@ -14,7 +15,9 @@ import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Dialog,
   DialogTrigger, 
   Avatar,
   AvatarImage } from '@/components/ui/index';
-import { TrendingUp, Keyboard, PlusCircle, Filter, Home, Users, Sparkles, Bookmark } from "lucide-react";
+import { TrendingUp, Keyboard, PlusCircle, Filter, Home, Users,  Bookmark } from "lucide-react";
+import Sparkles from '@/public/Sparkles.svg'
+
 import CreateCollectionDialog from "@/components/CreateCollectionDialog";
 import * as UIComponents from '@/components/ui/index';
 import getPublicCollections from "./_actions/getPublicCollections";
@@ -76,9 +79,11 @@ export default async function UsersPage() {
                 <Keyboard className="h-4 w-4" />
                 My Collections
               </Button>
-              <Button disabled variant="ghost" className="w-full justify-start gap-2" >
-                  <Sparkles className="h-4 w-4" />
+              <Button variant="ghost" className="w-full justify-start gap-2" >
+                <Link href={"/toolbox"} className="flex items-center gap-1">
+                  <Image src={Sparkles} alt="AI Detection sparkles" width={20} height={20} />
                   AI Features
+                </Link>
               </Button>
               <Button disabled variant="ghost" className="w-full justify-start gap-2">
                 <Bookmark className="h-4 w-4" />

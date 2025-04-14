@@ -13,4 +13,5 @@ export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { Avatar, AvatarFallback, AvatarImage, } from "@/components/ui/avatar";
 export {Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form"
 export {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select"
-export {Badge } from "@/components/ui/badge"
+export { Badge } from "@/components/ui/badge"
+export { Textarea } from "@/components/ui/textarea"
