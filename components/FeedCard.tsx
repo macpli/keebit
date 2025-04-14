@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 
 import * as UI from "@/components/ui/index";
@@ -19,6 +19,8 @@ import { Collection } from "@/types/collection";
 import getCollectionDetails from "@/app/(root)/_actions/getCollectionDetails";
 import { base64ToImage } from "@/lib/base64ToImage";
 
+const collectionDetailsCache = new Map();
+
 interface FeedCardProps {
   collection: Collection;
   variant?: "feed" | "profile";
@@ -28,8 +30,10 @@ export default function FeedCard({
   collection,
   variant = "feed",
 }: FeedCardProps) {
-  const [collectionDetails, setCollectionDetails] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [collectionDetails, setCollectionDetails] = useState(
+    collectionDetailsCache.get(collection.id) || null
+  );
+  const [isLoading, setIsLoading] = useState(!collectionDetails);
 
   const imageUrl = base64ToImage(collection.image);
 
@@ -38,22 +42,27 @@ export default function FeedCard({
   }, [collectionDetails]);
 
   useEffect(() => {
-    const fetchCollectionDetails = async () => {
-      try {
-        const details = await getCollectionDetails(
-          collection.userId,
-          collection.id
-        );
-        setCollectionDetails(details);
-      } catch (error) {
-        console.error("Error fetching collection details:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (!collectionDetailsCache.has(collection.id)) {
+      const fetchCollectionDetails = async () => {
+        try {
+          const details = await getCollectionDetails(
+            collection.userId,
+            collection.id
+          );
+          collectionDetailsCache.set(collection.id, details);
+          setCollectionDetails(details);
+        } catch (error) {
+          console.error("Error fetching collection details:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-    fetchCollectionDetails();
-  }, [collection.userId, collection.id]);
+      fetchCollectionDetails();
+    } else {
+      setIsLoading(false);
+    }
+  }, [collection.id, collection.userId]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -85,7 +94,7 @@ export default function FeedCard({
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span>{memoizedCollectionDetails.username}</span>
                 <span>•</span>
-                <span>{collection.createdAt.toLocaleDateString()}</span>
+                <span>{new Date(collection.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
