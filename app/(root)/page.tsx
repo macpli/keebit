@@ -67,9 +67,11 @@ export default async function UsersPage() {
       <aside>
       <div className="sticky top-20 space-y-6">
             <div className="space-y-1">
-              <Button disabled variant="ghost" className="w-full justify-start gap-2">
-                <Home className="h-4 w-4" />
-                Home
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <Link href={'/'} className="flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  Home
+                </Link>
               </Button>
               <Button disabled variant="ghost" className="w-full justify-start gap-2">
                 <Users className="h-4 w-4" />
@@ -128,7 +130,7 @@ export default async function UsersPage() {
 
             {/* Buttons panel */}
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline">
                 <Filter className="h-4 w-4 mr-2" />
                 Filter
               </Button>

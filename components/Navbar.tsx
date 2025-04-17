@@ -39,7 +39,7 @@ const Navbar = () => {
       {session && session?.user ? (
         <div className='flex gap-5 items-center mr-5'>
 
-          <Button variant="outline" size="sm" asChild className="mr-2">
+          <Button variant="outline" asChild className="mr-2">
             <Link href="/toolbox" className="flex items-center gap-1">
               <Image src={Sparkles} alt="AI Detection sparkles" width={24} height={24} />
               AI Features
