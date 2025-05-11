@@ -108,7 +108,7 @@ const UserProfile = () => {
     if (!session || !userId) return; // Ensure session and userId are available
     await initUserInfo();
 
-    // await fetchCollections(userId);
+    await fetchCollections(userId);
     
   }, [userId, session]); // Add session as a dependency
 
