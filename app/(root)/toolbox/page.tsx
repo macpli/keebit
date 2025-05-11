@@ -1,46 +1,96 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
+
 import Image from "next/image";
 
 import * as UI from "@/components/ui/index";
 
-import {Keyboard,Upload,Camera,Wand2,Headphones,PaintBucket,Layers,Zap,ChevronRight,X,Check,Loader2,Search,PlusCircle,Info,} from "lucide-react";
-import Sparkles from "@/public/Sparkles.svg"
+import {
+  Keyboard,
+  Upload,
+  Camera,
+  Wand2,
+  Headphones,
+  PaintBucket,
+  Layers,
+  Zap,
+  ChevronRight,
+  X,
+  Check,
+  Loader2,
+  Search,
+  PlusCircle,
+  Info,
+} from "lucide-react";
+import Sparkles from "@/public/Sparkles.svg";
+import getCollections from "../_actions/getCollections";
+import { ItemType } from "@/types/itemType";
+import getItemTypes from "../_actions/getItemTypes";
+import getDefaultItemTypes from "../_actions/getDefaultItemTypes";
+import { Item } from "@/types/item";
+import addItem from "../_actions/addItem";
 
 // Mock switch types for recommendations
 const switchTypes = [
-    { name: "Gateron Black Ink V2", type: "Linear", force: "Medium-Heavy", sound: "Thocky" },
-    { name: "Holy Panda", type: "Tactile", force: "Medium", sound: "Clacky" },
-    { name: "Cherry MX Blue", type: "Clicky", force: "Medium", sound: "Clicky" },
-    { name: "Boba U4T", type: "Tactile", force: "Medium-Heavy", sound: "Thocky" },
-    { name: "Alpaca", type: "Linear", force: "Medium", sound: "Muted" },
-    { name: "NK Cream", type: "Linear", force: "Medium-Heavy", sound: "Clacky" },
-    { name: "Zealios V2", type: "Tactile", force: "Heavy", sound: "Tactile" },
-    { name: "Tangerine", type: "Linear", force: "Light", sound: "Smooth" },
-  ]
-
-  
+  {
+    name: "Gateron Black Ink V2",
+    type: "Linear",
+    force: "Medium-Heavy",
+    sound: "Thocky",
+  },
+  { name: "Holy Panda", type: "Tactile", force: "Medium", sound: "Clacky" },
+  { name: "Cherry MX Blue", type: "Clicky", force: "Medium", sound: "Clicky" },
+  { name: "Boba U4T", type: "Tactile", force: "Medium-Heavy", sound: "Thocky" },
+  { name: "Alpaca", type: "Linear", force: "Medium", sound: "Muted" },
+  { name: "NK Cream", type: "Linear", force: "Medium-Heavy", sound: "Clacky" },
+  { name: "Zealios V2", type: "Tactile", force: "Heavy", sound: "Tactile" },
+  { name: "Tangerine", type: "Linear", force: "Light", sound: "Smooth" },
+];
 
 export default function ToolboxPage() {
   const [activeTab, setActiveTab] = useState("detect");
+  const [collections, setCollections] = useState<any[]>([]);
+  const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
 
   // Analyzer
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [detectionResults, setDetectionResults] = useState<{ component: string; confidence: number }[]>([]);
+  const [detectionResults, setDetectionResults] = useState<
+    { component: string; confidence: number }[]
+  >([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(
+    null
+  );
+  const [matchedItemType, setMatchedItemType] = useState<ItemType | null>(null);
+
+  const [componentName, setComponentName] = useState("");
+  const [componentDescription, setComponentDescription] = useState("");
+  const [selectedItemTypeId, setSelectedItemTypeId] = useState<string>("");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>("");
+  const [componentQuantity, setComponentQuantity] = useState<number>(1);
 
   // For build assistant
-  const [buildPrompt, setBuildPrompt] = useState("");
+  const [buildPrompt, setBuildPrompt] = useState({
+    layout: "any",
+    switchType: "any",
+    budget: "any",
+    soundProfile: "any",
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedBuild, setGeneratedBuild] = useState<any | null>(null);
 
   // For switch recommender
-  const [preferredType, setPreferredType] = useState<string>("all")
-  const [preferredForce, setPreferredForce] = useState<number[]>([50])
-  const [preferredSound, setPreferredSound] = useState<string>("all")
-  const [recommendedSwitches, setRecommendedSwitches] = useState<any[]>([])
+  const [preferredType, setPreferredType] = useState<string>("all");
+  const [preferredForce, setPreferredForce] = useState<number[]>([50]);
+  const [preferredSound, setPreferredSound] = useState<string>("all");
+  const [recommendedSwitches, setRecommendedSwitches] = useState<any[]>([]);
+
+  const [shouldFetch, setShouldFetch] = useState(false);
+
+  const { data: session } = useSession();
 
   // For Analyzer
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,8 +100,11 @@ export default function ToolboxPage() {
     if (file) {
       const url = URL.createObjectURL(file);
       setImageUrl(url);
+      setImageFile(file);
       setDetectionResults([]);
     }
+
+    console.log("File uploaded:", file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -72,13 +125,40 @@ export default function ToolboxPage() {
     fileInputRef.current?.click();
   };
 
-  const analyzeImage = () => {
-    if (!imageUrl) return;
-
+  const analyzeImage = async () => {
+    if (!imageFile) return;
+    const formData = new FormData();
+    formData.append("file", imageFile);
     setIsAnalyzing(true);
 
-    // CALL AI API HERE
-    console.log("analyzing image...");
+    try {
+      const res = await fetch("http://127.0.0.1:5000/classify", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await res.json();
+      console.log("Detection results:", data);
+
+      const formatted = Object.entries(data).map(([component, confidence]) => ({
+        component,
+        confidence: parseFloat(confidence as string),
+      }));
+
+      const sorted = formatted
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 3);
+
+      setDetectionResults(sorted);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const addToCollection = (component: string) => {
@@ -87,95 +167,170 @@ export default function ToolboxPage() {
   };
 
   // FOR   Build Assistant
-  const generateBuild = () => {
+  const generateBuild = async () => {
     if (!buildPrompt) return;
+
+    const requestBody = {
+      prompt: buildPrompt,
+    };
 
     setIsGenerating(true);
 
-    // Simulate API call to an LLM
-    setTimeout(() => {
-      // Mock generated build
-      const mockBuild = {
-        name: "Minimalist TKL Build",
-        description:
-          "A clean and professional TKL keyboard with tactile switches and a muted sound profile.",
-        components: [
-          {
-            type: "Case",
-            name: "KBDfans Tofu84 Aluminum Case",
-            description: "Gray aluminum case with a 7° typing angle",
-          },
-          {
-            type: "PCB",
-            name: "KBD8X MKII PCB",
-            description: "Hot-swappable PCB with RGB underglow",
-          },
-          {
-            type: "Plate",
-            name: "Brass Plate",
-            description: "Provides a firm typing experience",
-          },
-          {
-            type: "Switches",
-            name: "Boba U4T",
-            description: "Tactile switches with a thocky sound profile",
-          },
-          {
-            type: "Keycaps",
-            name: "GMK Minimal",
-            description: "Clean black-on-white Cherry profile keycaps",
-          },
-          {
-            type: "Stabilizers",
-            name: "Durock V2",
-            description: "Screw-in stabilizers, lubed with Krytox 205g0",
-          },
-        ],
+    try {
+      const res = await fetch("http://127.0.0.1:5000/suggest-build", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody.prompt),
+      });
+
+      const data = await res.json();
+      console.log("Req:", requestBody.prompt);
+      console.log("Response:", data);
+
+      const proposedBuild = {
+        description: data.description,
+        layout: data.layout,
+        soundProfile: data.soundProfile,
+        swtichType: data.swtichType,
+        totalPrice: data.totalPrice,
+        components: data.components,
       };
 
-      setGeneratedBuild(mockBuild);
+      setGeneratedBuild(proposedBuild);
       setIsGenerating(false);
-    }, 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-//   FOR Switch Recommender
-const recommendSwitches = () => {
+  //   FOR Switch Recommender
+  const recommendSwitches = () => {
     // Filter switches based on preferences
-    let filtered = [...switchTypes]
+    let filtered = [...switchTypes];
 
     if (preferredType !== "all") {
-      filtered = filtered.filter((s) => s.type.toLowerCase() === preferredType.toLowerCase())
+      filtered = filtered.filter(
+        (s) => s.type.toLowerCase() === preferredType.toLowerCase()
+      );
     }
 
     if (preferredSound !== "all") {
-      filtered = filtered.filter((s) => s.sound.toLowerCase() === preferredSound.toLowerCase())
+      filtered = filtered.filter(
+        (s) => s.sound.toLowerCase() === preferredSound.toLowerCase()
+      );
     }
 
     // Force is more complex - we'd match based on ranges
     // For this demo, we'll just sort by how close they are to the preferred force
-    const forceValue = preferredForce[0]
+    const forceValue = preferredForce[0];
     const forceMap: { [key: string]: number } = {
       Light: 45,
       Medium: 55,
       "Medium-Heavy": 65,
       Heavy: 75,
-    }
+    };
 
     filtered = filtered.sort((a, b) => {
-      const aForce = forceMap[a.force] || 60
-      const bForce = forceMap[b.force] || 60
-      return Math.abs(aForce - forceValue) - Math.abs(bForce - forceValue)
-    })
+      const aForce = forceMap[a.force] || 60;
+      const bForce = forceMap[b.force] || 60;
+      return Math.abs(aForce - forceValue) - Math.abs(bForce - forceValue);
+    });
 
-    setRecommendedSwitches(filtered)
-  }
+    setRecommendedSwitches(filtered);
+  };
+
+  const matchDetectedType = () => {
+    if (!selectedComponent) return;
+    console.log(selectedComponent);
+    console.log(itemTypes);
+
+    const selectedWords = selectedComponent.toLowerCase().split(" ");
+
+    const match = itemTypes.find((itemType) =>
+      selectedWords.some((word) => itemType.name.toLowerCase().includes(word))
+    );
+    if (match) {
+      setMatchedItemType(match);
+    }
+
+    console.log("Matched item type:", match);
+  };
+
+  const addDetctedItemToCollection = async () => {
+    const item: any = {
+      name: componentName,
+      description: componentDescription,
+      itemType: matchedItemType ? matchedItemType.name : "",
+      quantity: componentQuantity,
+      additionalData: {},
+    }
+    console.log('ITEM: ' + item)
+
+    try {
+      await addItem(item, selectedCollectionId, true);
+      console.log("Item added successfully");
+    } catch (error) {
+      console.error("Error adding item:", error);
+    }
+    
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getCollections(session?.user!.id!);
+      const customItemTypes = await getItemTypes();
+      const defaultItemTypes = await getDefaultItemTypes();
+
+      const itemTypes = [...customItemTypes, ...defaultItemTypes];
+
+      setCollections(data);
+      setItemTypes(itemTypes);
+
+      setShouldFetch(false);
+    };
+
+    if (shouldFetch) {
+      fetchData();
+    }
+  }, [shouldFetch]);
+
+  useEffect(() => {
+    if (session && session.user && session.user.id) {
+      setShouldFetch(true);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (!selectedComponent) return;
+    matchDetectedType();
+  }, [selectedComponent]);
+
+   useEffect(() => {
+    if (showAddDialog && selectedComponent) {
+      setComponentName(selectedComponent);
+      setComponentDescription("");
+      setSelectedItemTypeId(matchedItemType ? matchedItemType.id : "");
+      setSelectedCollectionId("");
+      setComponentQuantity(1);
+    }
+  }, [showAddDialog, selectedComponent, matchedItemType]);
 
   return (
     <div className="min-h-screen mx-auto container px-4 py-8">
       <div className="flex items-center mb-8">
         <div className="mr-auto">
           <h1 className="text-3xl font-bold flex items-center">
-            <Image src={Sparkles} alt="AI Detection sparkles" width={32} height={32} className="mr-2" />
+            <Image
+              src={Sparkles}
+              alt="AI Detection sparkles"
+              width={32}
+              height={32}
+              className="mr-2"
+            />
             {/* <Sparkles className="h-8 w-8 mr-2 text-primary" /> */}
             AI Features
           </h1>
@@ -368,7 +523,7 @@ const recommendSwitches = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Prompt Input */}
                 <div className="space-y-4">
-                  <div>
+                  {/* <div>
                     <UI.Label htmlFor="build-prompt">
                       Describe your ideal keyboard
                     </UI.Label>
@@ -379,12 +534,18 @@ const recommendSwitches = () => {
                       value={buildPrompt}
                       onChange={(e) => setBuildPrompt(e.target.value)}
                     />
-                  </div>
+                  </div> */}
 
                   <div className="flex flex-col gap-2">
-                    <UI.Label>Preferences (optional)</UI.Label>
+                    <UI.Label>Preferences</UI.Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <UI.Select defaultValue="any">
+                      <UI.Select
+                        defaultValue="any"
+                        value={buildPrompt.layout}
+                        onValueChange={(val) =>
+                          setBuildPrompt((prev) => ({ ...prev, layout: val }))
+                        }
+                      >
                         <UI.SelectTrigger>
                           <UI.SelectValue placeholder="Layout" />
                         </UI.SelectTrigger>
@@ -398,7 +559,16 @@ const recommendSwitches = () => {
                         </UI.SelectContent>
                       </UI.Select>
 
-                      <UI.Select defaultValue="any">
+                      <UI.Select
+                        defaultValue="any"
+                        value={buildPrompt.switchType}
+                        onValueChange={(val) =>
+                          setBuildPrompt((prev) => ({
+                            ...prev,
+                            switchType: val,
+                          }))
+                        }
+                      >
                         <UI.SelectTrigger>
                           <UI.SelectValue placeholder="Switch Type" />
                         </UI.SelectTrigger>
@@ -412,25 +582,40 @@ const recommendSwitches = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <UI.Select defaultValue="any">
+                      <UI.Select
+                        defaultValue="any"
+                        value={buildPrompt.budget}
+                        onValueChange={(val) =>
+                          setBuildPrompt((prev) => ({ ...prev, budget: val }))
+                        }
+                      >
                         <UI.SelectTrigger>
                           <UI.SelectValue placeholder="Budget" />
                         </UI.SelectTrigger>
                         <UI.SelectContent>
                           <UI.SelectItem value="any">Any Budget</UI.SelectItem>
-                          <UI.SelectItem value="budget">
+                          <UI.SelectItem value="$50-150">
                             Budget ($50-150)
                           </UI.SelectItem>
-                          <UI.SelectItem value="mid">
+                          <UI.SelectItem value="$150-300">
                             Mid-range ($150-300)
                           </UI.SelectItem>
-                          <UI.SelectItem value="high">
+                          <UI.SelectItem value="$300+">
                             High-end ($300+)
                           </UI.SelectItem>
                         </UI.SelectContent>
                       </UI.Select>
 
-                      <UI.Select defaultValue="any">
+                      <UI.Select
+                        defaultValue="any"
+                        value={buildPrompt.soundProfile}
+                        onValueChange={(val) =>
+                          setBuildPrompt((prev) => ({
+                            ...prev,
+                            soundProfile: val,
+                          }))
+                        }
+                      >
                         <UI.SelectTrigger>
                           <UI.SelectValue placeholder="Sound Profile" />
                         </UI.SelectTrigger>
@@ -465,74 +650,99 @@ const recommendSwitches = () => {
                 </div>
 
                 {/* Generated Build */}
-                    <div className="border rounded-lg p-4">
-                    {generatedBuild ? (
-                        <div className="space-y-4">
-                        <div>
-                            <h3 className="text-xl font-bold">
-                            {generatedBuild.name}
-                            </h3>
-                            <p className="text-muted-foreground">
-                            {generatedBuild.description}
-                            </p>
-                        </div>
-
-                        <UI.Separator />
-
-                        <div className="space-y-3">
-                            <h4 className="font-medium">Components</h4>
-                            {generatedBuild.components.map(
-                            (component: any, index: number) => (
-                                <div
-                                key={index}
-                                className="flex justify-between items-start"
-                                >
-                                <div>
-                                    <div className="font-medium">
-                                    {component.name}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                    {component.description}
-                                    </div>
-                                </div>
-                                <UI.Badge variant="outline">{component.type}</UI.Badge>
-                                </div>
-                            )
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                            <UI.Button variant="outline">Refine Build</UI.Button>
-                            <UI.Button>Create Collection</UI.Button>
-                        </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full py-8 text-center">
-                        <Wand2 className="h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium mb-2">
-                            AI Build Assistant
+                <div className="border rounded-lg p-4">
+                  {generatedBuild ? (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-xl font-bold">
+                          {/* {generatedBuild.name} */}
+                          AI Generated Build
                         </h3>
-                        <p className="text-muted-foreground max-w-md">
-                            Describe your preferences and let AI suggest the perfect
-                            keyboard build for you
+                        <p className="text-muted-foreground">
+                          {generatedBuild.description}
                         </p>
+                      </div>
+
+                      <UI.Separator />
+
+                      <div className="space-y-4">
+                        <h4 className="font-bold">Components</h4>
+
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">
+                            {generatedBuild.components.case}
+                          </div>
+
+                          <UI.Badge variant="outline">Case</UI.Badge>
                         </div>
-                    )}
+
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">
+                            {generatedBuild.components.switches}
+                          </div>
+
+                          <UI.Badge variant="outline">Switches</UI.Badge>
+                        </div>
+
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">
+                            {generatedBuild.components.keycaps}
+                          </div>
+
+                          <UI.Badge variant="outline">Keycaps</UI.Badge>
+                        </div>
+
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">
+                            {generatedBuild.components.pcb}
+                          </div>
+
+                          <UI.Badge variant="outline">PCB</UI.Badge>
+                        </div>
+
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">
+                            {generatedBuild.components.stabilizers}
+                          </div>
+
+                          <UI.Badge variant="outline">Stabilizers</UI.Badge>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-4">
+                        <UI.Button variant="outline">Refine Build</UI.Button>
+                        <UI.Button>Create Collection</UI.Button>
+                      </div>
                     </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                      <Wand2 className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">
+                        AI Build Assistant
+                      </h3>
+                      <p className="text-muted-foreground max-w-md">
+                        Describe your preferences and let AI suggest the perfect
+                        keyboard build for you
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </UI.CardContent>
           </UI.Card>
         </UI.TabsContent>
 
-                {/* Switch Recommender Tab */}
-                <UI.TabsContent value="switch" className="space-y-6">
+        {/* Switch Recommender Tab */}
+        <UI.TabsContent value="switch" className="space-y-6">
           <UI.Card>
             <UI.CardHeader>
               <UI.CardTitle className="flex items-center">
                 <Layers className="h-5 w-5 mr-2" />
                 Switch Recommendation Engine
               </UI.CardTitle>
-              <UI.CardDescription>Find the perfect switches based on your preferences</UI.CardDescription>
+              <UI.CardDescription>
+                Find the perfect switches based on your preferences
+              </UI.CardDescription>
             </UI.CardHeader>
             <UI.CardContent>
               <div className="grid md:grid-cols-2 gap-6">
@@ -542,28 +752,36 @@ const recommendSwitches = () => {
                     <UI.Label className="mb-2 block">Switch Type</UI.Label>
                     <div className="flex flex-wrap gap-2">
                       <UI.Badge
-                        variant={preferredType === "all" ? "default" : "outline"}
+                        variant={
+                          preferredType === "all" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredType("all")}
                       >
                         All Types
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredType === "linear" ? "default" : "outline"}
+                        variant={
+                          preferredType === "linear" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredType("linear")}
                       >
                         Linear
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredType === "tactile" ? "default" : "outline"}
+                        variant={
+                          preferredType === "tactile" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredType("tactile")}
                       >
                         Tactile
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredType === "clicky" ? "default" : "outline"}
+                        variant={
+                          preferredType === "clicky" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredType("clicky")}
                       >
@@ -577,7 +795,13 @@ const recommendSwitches = () => {
                       <UI.Label>Actuation Force</UI.Label>
                       <span className="text-sm">{preferredForce[0]}g</span>
                     </div>
-                    <UI.Slider min={35} max={80} step={1} value={preferredForce} onValueChange={setPreferredForce} />
+                    <UI.Slider
+                      min={35}
+                      max={80}
+                      step={1}
+                      value={preferredForce}
+                      onValueChange={setPreferredForce}
+                    />
                     <div className="flex justify-between mt-1 text-xs text-muted-foreground">
                       <span>Light (35g)</span>
                       <span>Medium (55g)</span>
@@ -589,35 +813,45 @@ const recommendSwitches = () => {
                     <UI.Label className="mb-2 block">Sound Profile</UI.Label>
                     <div className="flex flex-wrap gap-2">
                       <UI.Badge
-                        variant={preferredSound === "all" ? "default" : "outline"}
+                        variant={
+                          preferredSound === "all" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredSound("all")}
                       >
                         All Sounds
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredSound === "thocky" ? "default" : "outline"}
+                        variant={
+                          preferredSound === "thocky" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredSound("thocky")}
                       >
                         Thocky
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredSound === "clacky" ? "default" : "outline"}
+                        variant={
+                          preferredSound === "clacky" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredSound("clacky")}
                       >
                         Clacky
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredSound === "muted" ? "default" : "outline"}
+                        variant={
+                          preferredSound === "muted" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredSound("muted")}
                       >
                         Muted
                       </UI.Badge>
                       <UI.Badge
-                        variant={preferredSound === "poppy" ? "default" : "outline"}
+                        variant={
+                          preferredSound === "poppy" ? "default" : "outline"
+                        }
                         className="cursor-pointer"
                         onClick={() => setPreferredSound("poppy")}
                       >
@@ -636,17 +870,26 @@ const recommendSwitches = () => {
                 <div className="border rounded-lg p-4">
                   {recommendedSwitches.length > 0 ? (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Recommended Switches</h3>
+                      <h3 className="text-lg font-medium">
+                        Recommended Switches
+                      </h3>
                       <div className="space-y-3">
                         {recommendedSwitches.map((sw, index) => (
-                          <div key={index} className="border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                          <div
+                            key={index}
+                            className="border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+                          >
                             <div className="flex justify-between">
                               <h4 className="font-medium">{sw.name}</h4>
                               <UI.Badge variant="outline">{sw.type}</UI.Badge>
                             </div>
                             <div className="flex gap-2 mt-2">
-                              <UI.Badge variant="secondary">{sw.force}</UI.Badge>
-                              <UI.Badge variant="secondary">{sw.sound}</UI.Badge>
+                              <UI.Badge variant="secondary">
+                                {sw.force}
+                              </UI.Badge>
+                              <UI.Badge variant="secondary">
+                                {sw.sound}
+                              </UI.Badge>
                             </div>
                             <div className="flex justify-end mt-2">
                               <UI.Button variant="ghost" size="sm">
@@ -661,9 +904,12 @@ const recommendSwitches = () => {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                       <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Switch Recommendations</h3>
+                      <h3 className="text-lg font-medium mb-2">
+                        Switch Recommendations
+                      </h3>
                       <p className="text-muted-foreground max-w-md">
-                        Set your preferences and get personalized switch recommendations
+                        Set your preferences and get personalized switch
+                        recommendations
                       </p>
                     </div>
                   )}
@@ -673,6 +919,100 @@ const recommendSwitches = () => {
           </UI.Card>
         </UI.TabsContent>
       </UI.Tabs>
+
+      {/* Add Detected Item to collection dialog */}
+      <UI.Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <UI.DialogContent>
+          <UI.DialogHeader>
+            <UI.DialogTitle>Add to Collection</UI.DialogTitle>
+            <UI.DialogDescription>
+              Add this detected {selectedComponent} to one of your collections
+            </UI.DialogDescription>
+          </UI.DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <UI.Label htmlFor="component-name">Component Name</UI.Label>
+              <UI.Input
+                id="component-name"
+                placeholder={`Enter ${selectedComponent} name`}
+                value={componentName}
+              onChange={(e) => setComponentName(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <UI.Label htmlFor="component-description">Description</UI.Label>
+              <UI.Textarea
+                id="component-description"
+                placeholder="Enter a description"
+                className="resize-none"
+                 value={componentDescription}
+              onChange={(e) => setComponentDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <UI.Label htmlFor="collection">Item Type</UI.Label>
+
+              <UI.Select
+                defaultValue={matchedItemType ? matchedItemType.id : ""}
+              >
+                <UI.SelectTrigger id="collection">
+                  <UI.SelectValue placeholder="Select item type" />
+                </UI.SelectTrigger>
+
+                <UI.SelectContent>
+                  {matchedItemType && (
+                    <UI.SelectItem value={matchedItemType.id}>
+                      {/* {matchedItemType.name} */}
+                    </UI.SelectItem>
+                  )}
+
+                  {itemTypes.map((itemType, rx) => (
+                    <UI.SelectItem key={rx} value={itemType.id}>
+                      {itemType.name}
+                    </UI.SelectItem>
+                  ))}
+                </UI.SelectContent>
+              </UI.Select>
+            </div>
+
+            <div className="space-y-2">
+              <UI.Label htmlFor="collection">Add to Collection</UI.Label>
+              <UI.Select defaultValue="" value={selectedCollectionId} onValueChange={setSelectedCollectionId}>
+                <UI.SelectTrigger id="collection">
+                  <UI.SelectValue placeholder="Select collection" />
+                </UI.SelectTrigger>
+                <UI.SelectContent>
+                  {collections.map((collection) => (
+                    <UI.SelectItem key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </UI.SelectItem>
+                  ))}
+                </UI.SelectContent>
+              </UI.Select>
+            </div>
+          </div>
+
+          <UI.DialogFooter>
+            <UI.Button
+              variant="outline"
+              onClick={() => setShowAddDialog(false)}
+            >
+              Cancel
+            </UI.Button>
+            <UI.Button
+              onClick={() => (
+                addDetctedItemToCollection(), setShowAddDialog(false)
+              )}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Add Component
+            </UI.Button>
+          </UI.DialogFooter>
+        </UI.DialogContent>
+      </UI.Dialog>
     </div>
   );
 }
