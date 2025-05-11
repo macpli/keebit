@@ -67,7 +67,6 @@ export default function FeedCard({
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  console.log(memoizedCollectionDetails);
 
   return (
     <UI.Card key={collection.id} className="overflow-hidden">

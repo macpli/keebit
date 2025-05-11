@@ -1,6 +1,6 @@
 export {  Button } from './button';
 export { Separator } from './separator';
-export {  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+export {  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './dialog';
 export { DropdownMenu, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal,DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup, DropdownMenuShortcut } from './dropdown-menu';
 export { ScrollArea } from './scroll-area';
 export { Label } from './label';
@@ -13,4 +13,5 @@ export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { Avatar, AvatarFallback, AvatarImage, } from "@/components/ui/avatar";
 export {Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form"
 export {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select"
-export {Badge } from "@/components/ui/badge"
+export { Badge } from "@/components/ui/badge"
+export { Textarea } from "@/components/ui/textarea"

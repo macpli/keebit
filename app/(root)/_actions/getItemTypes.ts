@@ -8,7 +8,7 @@ interface ItemType {
     description: string;
 }
 
-export default async function addItemType(){
+export default async function getItemType(){
     const session = await auth();
     if(session?.user === null || session?.user === undefined) throw new Error("User not authenticated");
 
