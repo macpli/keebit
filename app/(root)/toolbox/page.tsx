@@ -182,15 +182,11 @@ export default function ToolboxPage() {
       const res = await fetch(apiUrl + "/suggest-build", {
         method: "POST",
         headers: {
-          "Access-Control-Allow-Origin": "*",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody.prompt),
+        body: JSON.stringify(requestBody),
       });
-
       const data = await res.json();
-      console.log("Req:", requestBody.prompt);
-      console.log("Response:", data);
 
       const proposedBuild = {
         description: data.description,
@@ -270,8 +266,8 @@ export default function ToolboxPage() {
       itemType: matchedItemType ? matchedItemType.name : "",
       quantity: componentQuantity,
       additionalData: {},
-    }
-    console.log('ITEM: ' + item)
+    };
+    console.log("ITEM: " + item);
 
     try {
       await addItem(item, selectedCollectionId, true);
@@ -279,7 +275,6 @@ export default function ToolboxPage() {
     } catch (error) {
       console.error("Error adding item:", error);
     }
-    
   };
 
   useEffect(() => {
@@ -312,7 +307,7 @@ export default function ToolboxPage() {
     matchDetectedType();
   }, [selectedComponent]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (showAddDialog && selectedComponent) {
       setComponentName(selectedComponent);
       setComponentDescription("");
@@ -940,7 +935,7 @@ export default function ToolboxPage() {
                 id="component-name"
                 placeholder={`Enter ${selectedComponent} name`}
                 value={componentName}
-              onChange={(e) => setComponentName(e.target.value)}
+                onChange={(e) => setComponentName(e.target.value)}
               />
             </div>
 
@@ -950,8 +945,8 @@ export default function ToolboxPage() {
                 id="component-description"
                 placeholder="Enter a description"
                 className="resize-none"
-                 value={componentDescription}
-              onChange={(e) => setComponentDescription(e.target.value)}
+                value={componentDescription}
+                onChange={(e) => setComponentDescription(e.target.value)}
               />
             </div>
 
@@ -983,7 +978,11 @@ export default function ToolboxPage() {
 
             <div className="space-y-2">
               <UI.Label htmlFor="collection">Add to Collection</UI.Label>
-              <UI.Select defaultValue="" value={selectedCollectionId} onValueChange={setSelectedCollectionId}>
+              <UI.Select
+                defaultValue=""
+                value={selectedCollectionId}
+                onValueChange={setSelectedCollectionId}
+              >
                 <UI.SelectTrigger id="collection">
                   <UI.SelectValue placeholder="Select collection" />
                 </UI.SelectTrigger>
