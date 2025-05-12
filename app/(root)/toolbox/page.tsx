@@ -178,11 +178,11 @@ export default function ToolboxPage() {
 
     setIsGenerating(true);
 
-    console.log(apiUrl)
     try {
       const res = await fetch(apiUrl + "/suggest-build", {
         method: "POST",
         headers: {
+          "Access-Control-Allow-Origin": "*",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody.prompt),
