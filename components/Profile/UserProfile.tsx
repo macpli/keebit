@@ -107,7 +107,7 @@ const UserProfile = () => {
   const initData = useCallback(async () => {
     if (!session || !userId) return; // Ensure session and userId are available
     await initUserInfo();
-
+    await initFollow();
     await fetchCollections(userId);
     
   }, [userId, session]); // Add session as a dependency
@@ -116,8 +116,8 @@ const UserProfile = () => {
   const initFollow = async () => {
     const followersData = await getFollowers(userId);
     setFollowers(followersData);
-    const follow = await initFollow();
-    setIsFollowingUser(follow);
+    // const follow = await initFollow();
+    // setIsFollowingUser(follow);
 
     const followData: FollowData = {
       user_id: session?.user?.id || "",
@@ -125,6 +125,8 @@ const UserProfile = () => {
     };
     
     const result = await isFollowing(followData);
+    setIsFollowingUser(result);
+
     return result;
   };
   
