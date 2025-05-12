@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -30,10 +30,11 @@ import { Collection } from "@/types/collection";
 import { CollectionCard } from "../CollectionCard";
 import PersonalCollections from "./PersonalCollections";
 import PublicUserCollections from "./PublicUserCollections";
-
-interface UserProfileProps {
-  user: UserDetails;
-}
+import addFollow from "@/app/(root)/_actions/addFollow";
+import { FollowData } from "@/types/followData";
+import { revalidatePath } from "next/cache";
+import isFollowing from "@/app/(root)/_actions/isFollowing";
+import getCollections from "@/app/(root)/_actions/getCollections";
 
 interface UserDetails {
   id: string;
@@ -54,14 +55,21 @@ interface UserDetails {
 }
 
 const UserProfile = () => {
-  const { userId }: { userId: string } = useParams();
+  const rawParams = useParams();
+  const userId = useMemo(() => rawParams?.userId as string, [rawParams]);
+
+  if (!userId) return null; // Or return an error component
+
   const [userInfo, setUserInfo] = useState<UserDetails | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [followers, setFollowers] = useState({ followers: 0, follows: 0 });
+  const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [collectionCount, setCollectionCount] = useState(0);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const hasFetched = useRef(false);
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const sessionUserId = session?.user?.id;
 
   async function fetchCollections(userId: string) {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -79,8 +87,7 @@ const UserProfile = () => {
     return data.collections;
   }
 
-  const initData = async () => {
-    await fetchCollections(userId);
+  async function initUserInfo(){
     const userDetailsResponse = await getUserDetails(userId);
     const userInfoResponse = await getUserInfo(userId);
 
@@ -89,17 +96,59 @@ const UserProfile = () => {
       ...userInfoResponse,
       ...userDetailsResponse,
     }));
-
-    const followersData = await getFollowers(userId);
-    setFollowers(followersData);
-
     const collectionsData = await getCollectionsCount(userId);
     setCollectionCount(collectionsData.count);
+
+    const collectionsResponse = await getCollections(userId);
+    setCollections(collectionsResponse);
+
+  }
+
+  const initData = useCallback(async () => {
+    if (!session || !userId) return; // Ensure session and userId are available
+    await initUserInfo();
+
+    await fetchCollections(userId);
+    
+  }, [userId, session]); // Add session as a dependency
+
+  
+  const initFollow = async () => {
+    const followersData = await getFollowers(userId);
+    setFollowers(followersData);
+    const follow = await initFollow();
+    setIsFollowingUser(follow);
+
+    const followData: FollowData = {
+      user_id: session?.user?.id || "",
+      followed_id: userId,
+    };
+    
+    const result = await isFollowing(followData);
+    return result;
+  };
+  
+  const handleFollow = async () => {
+    if (!session || !session.user || !session.user.id) {
+      console.error("User not logged in or session invalid");
+      return;
+    }
+    
+    const followData: FollowData = {
+      user_id: session.user.id,
+      followed_id: userId,
+    };
+    
+    await addFollow(followData);
+    revalidatePath(`/profile/${userId}`);
   };
 
   useEffect(() => {
+    if (status != "authenticated" || !userId || hasFetched.current) return;
+    hasFetched.current = true;
+    console.log(session);
     initData();
-  }, [userId]);
+  }, [initData, status]);
 
   if (userId == null || userId == undefined || userInfo == null) {
     return;
@@ -124,7 +173,7 @@ const UserProfile = () => {
 
         <div className="container px-4 mr-auto ml-auto">
           <div className="relative -mt-20 bg-background rounded-lg border shadow-sm p-6">
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-12">
               {/* Avatar and basic info */}
               <div className="flex flex-col items-center md:items-start">
                 <UI.Avatar className="h-32 w-32 border-4 border-background">
@@ -132,10 +181,6 @@ const UserProfile = () => {
                     src={userInfo.image || ""}
                     alt="user avatar"
                   />
-                  {/* <UI.AvatarFallback className="text-4xl"> */}
-                  {/* {user.name.charAt(0)} */}
-                  {/* AvatarFallbackPlaceholder */}
-                  {/* </UI.AvatarFallback> */}
                 </UI.Avatar>
                 <div className="mt-4 text-center md:text-left">
                   <h1 className="text-2xl font-bold">{userInfo.name}</h1>
@@ -151,37 +196,38 @@ const UserProfile = () => {
                       <Settings className="h-4 w-4 mr-2" />
                       Edit Profile
                     </UI.Button>
-                  ): (
-                    <>
-                  <UI.Button
-                  //   variant={isFollowing ? "outline" : "default"}
-                  //   onClick={handleFollow}
-                  >
-                    {/* {isFollowing ? "Following" : "Follow"} */}
-                    Follow
-                  </UI.Button>
-                  <UI.Button variant="outline">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Message
-                  </UI.Button>
-                  <UI.DropdownMenu>
-                    <UI.DropdownMenuTrigger asChild>
-                      <UI.Button variant="outline" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </UI.Button>
-                    </UI.DropdownMenuTrigger>
-                    <UI.DropdownMenuContent align="end">
-                      <UI.DropdownMenuItem>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share Profile
-                      </UI.DropdownMenuItem>
-                      <UI.DropdownMenuItem>
-                        <Users className="mr-2 h-4 w-4" />
-                        View Followers
-                      </UI.DropdownMenuItem>
-                    </UI.DropdownMenuContent>
-                  </UI.DropdownMenu>
-                    </>
+                  ) : (
+                    status === "authenticated" && session?.user?.id !== userId && (
+                      <>
+                        <UI.Button
+                          variant={isFollowingUser ? "outline" : "default"}
+                          onClick={handleFollow}
+                        >
+                          {isFollowingUser ? "Unfollow" : "Follow"}
+                        </UI.Button>
+                        <UI.Button variant="outline">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Message
+                        </UI.Button>
+                        <UI.DropdownMenu>
+                          <UI.DropdownMenuTrigger asChild>
+                            <UI.Button variant="outline" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </UI.Button>
+                          </UI.DropdownMenuTrigger>
+                          <UI.DropdownMenuContent align="end">
+                            <UI.DropdownMenuItem>
+                              <Share2 className="mr-2 h-4 w-4" />
+                              Share Profile
+                            </UI.DropdownMenuItem>
+                            <UI.DropdownMenuItem>
+                              <Users className="mr-2 h-4 w-4" />
+                              View Followers
+                            </UI.DropdownMenuItem>
+                          </UI.DropdownMenuContent>
+                        </UI.DropdownMenu>
+                      </>
+                    )
                   )}
                 </div>
               </div>
@@ -192,26 +238,19 @@ const UserProfile = () => {
                   <div className="max-w-2xl">
                     <p className="text-sm mb-4">
                       {userInfo?.bio}
-                      {/* User bio placeholder */}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm">
-                      {/* {user.location && ( */}
                       <div className="flex items-center text-muted-foreground">
                         <MapPin className="h-4 w-4 mr-2" />
-                        {/* User Location Placeholder */}
                         {userInfo.location}
                       </div>
-                      {/* )} */}
                       {userInfo && (
-                        //   .website
                         <div className="flex items-center text-muted-foreground">
                           <Link2 className="h-4 w-4 mr-2" />
                           <a
-                            //   href={`https://${user.website}`}
                             className="text-primary hover:underline"
                           >
-                            {/* userWebistePlaceholder.com */}
                             {userInfo.website}
                           </a>
                         </div>
@@ -223,7 +262,6 @@ const UserProfile = () => {
                         </div>
                       )}
                       {userInfo && (
-                        //   .joinDate
                         <div className="flex items-center text-muted-foreground">
                           <CalendarDays className="h-4 w-4 mr-2" />
                           Joined {userInfo.joinDate.toLocaleDateString()}
@@ -280,13 +318,10 @@ const UserProfile = () => {
           </div>
 
           {session?.user?.id == userId ? (
-            <PersonalCollections collections = { collections } />
+            <PersonalCollections collections={collections} />
           ) : (
-            <PublicUserCollections collections={ collections }/>
+            <PublicUserCollections collections={collections} />
           )}
-
-
-
         </div>
       </div>
     </div>

@@ -14,7 +14,6 @@ export default function PersonalCollections({
     const publicCollections = collections.filter((collection) => collection.isPublic == true);
     const privateCollections = collections.filter((collection) => collection.isPublic == false);
 
-    console.log(collections, publicCollections, privateCollections)
   return (
     <>
       {/* All collections */}

@@ -4,7 +4,6 @@ import { pool } from "@/lib/db";
 import getItemTypeId from "@/app/(root)/_actions/getItemTypeId";
 
 interface Item {
-    type: string;
     name: string;
     description: string;
     quantity: number;
@@ -13,8 +12,9 @@ interface Item {
 }
 
 export default async function addItem(item: Item, collectionId: string, isDefault: boolean) {
-
+    
     const itemTypeId = await getItemTypeId(item.itemType, isDefault);
+    console.log("Collection ID: ", collectionId);
     try {
         const { rows } = await pool.query(
             `INSERT INTO items ("collectionId", "typeId", name, description, quantity, additional_data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,

@@ -25,7 +25,7 @@ export default async function getItemTypeId(itemTypeName: string, isDefault: boo
             `SELECT id FROM item_types WHERE name = $1 AND "userId" = $2`,
             [itemTypeName, userId]
         );
-        
+        console.log("ITEM TYPE name: ", itemTypeName);
         return rows[0];
     }
 
