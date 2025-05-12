@@ -134,7 +134,7 @@ export default function ToolboxPage() {
     setIsAnalyzing(true);
 
     try {
-      const res = await fetch(apiUrl + "classify", {
+      const res = await fetch(apiUrl + "/classify", {
         method: "POST",
         body: formData,
       });
@@ -180,7 +180,7 @@ export default function ToolboxPage() {
 
     console.log(apiUrl)
     try {
-      const res = await fetch(apiUrl + "suggest-build", {
+      const res = await fetch(apiUrl + "/suggest-build", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
