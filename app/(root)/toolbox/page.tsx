@@ -49,6 +49,8 @@ const switchTypes = [
 ];
 
 export default function ToolboxPage() {
+  const API_AI_URL = process.env.AI_API_URL;
+
   const [activeTab, setActiveTab] = useState("detect");
   const [collections, setCollections] = useState<any[]>([]);
   const [itemTypes, setItemTypes] = useState<ItemType[]>([]);
@@ -132,7 +134,7 @@ export default function ToolboxPage() {
     setIsAnalyzing(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/classify", {
+      const res = await fetch(API_AI_URL + "classify", {
         method: "POST",
         body: formData,
       });
@@ -177,7 +179,7 @@ export default function ToolboxPage() {
     setIsGenerating(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/suggest-build", {
+      const res = await fetch(API_AI_URL + "suggest-build", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
